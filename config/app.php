@@ -65,7 +65,24 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Asia/Colombo'),
+
+    /*
+    | Proxies (load balancer, Cloudflare...) whose X-Forwarded-* headers to trust, comma separated,
+    | or "*". Needed behind a TLS-terminating proxy so HTTPS, client IPs and rate limits are right.
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
+    | The first admin account, created by `db:seed` on a fresh install.
+    */
+
+    'first_admin' => [
+        'name' => env('ADMIN_NAME', 'Admin User'),
+        'email' => env('ADMIN_EMAIL'),
+        'password' => env('ADMIN_PASSWORD'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

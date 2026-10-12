@@ -3,133 +3,171 @@
 @import 'tw-animate-css';
 
 @source '../views';
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
-@custom-variant dark (&:is(.dark *));
+/*
+ | Kulatissa Hardware admin console. One light palette (DESIGN.md): cool zinc neutrals, hairlines
+ | over shadows, one blue accent. Colours are RGB channels so opacity modifiers (bg-brand-500/10)
+ | work. The starter kit's shadcn tokens (auth and account screens) map onto the same palette.
+ */
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji';
 
+    --color-brand-50: rgb(var(--c-brand-50));
+    --color-brand-100: rgb(var(--c-brand-100));
+    --color-brand-200: rgb(var(--c-brand-200));
+    --color-brand-300: rgb(var(--c-brand-300));
+    --color-brand-400: rgb(var(--c-brand-400));
+    --color-brand-500: rgb(var(--c-brand-500));
+    --color-brand-600: rgb(var(--c-brand-600));
+    --color-brand-700: rgb(var(--c-brand-700));
+    --color-brand-800: rgb(var(--c-brand-800));
+    --color-brand-900: rgb(var(--c-brand-900));
+    --color-canvas: rgb(var(--c-canvas));
+    --color-canvas-card: rgb(var(--c-card));
+    --color-ink: rgb(var(--c-ink));
+    --color-ink-muted: rgb(var(--c-ink-muted));
+    --color-ink-subtle: rgb(var(--c-ink-subtle));
+    --color-line: rgb(var(--c-line));
+    --color-success-bg: rgb(var(--c-success-bg));
+    --color-success-text: rgb(var(--c-success-text));
+    --color-warning-bg: rgb(var(--c-warning-bg));
+    --color-warning-text: rgb(var(--c-warning-text));
+    --color-danger-bg: rgb(var(--c-danger-bg));
+    --color-danger-text: rgb(var(--c-danger-text));
+
+    --radius-xl2: 1.25rem;
+    --radius-card: var(--radius-card-size);
+    --shadow-soft: var(--shadow-soft-value);
+    --shadow-pop: 0 20px 60px rgba(0, 0, 0, 0.18);
+
+    --animate-fadeIn: fadeIn 0.15s ease;
+    --animate-fadeScaleIn: fadeScaleIn 0.18s ease;
+    --animate-slideInRight: slideInRight 0.22s ease;
+    --animate-popIn: popIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    --animate-shimmer: shimmer 2.4s linear infinite;
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    @keyframes fadeScaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.96);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+    @keyframes popIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        70% {
+            opacity: 1;
+            transform: scale(1.08);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    @keyframes shimmer {
+        from {
+            background-position: 100% 0;
+        }
+        to {
+            background-position: -100% 0;
+        }
+    }
+
+    /* shadcn tokens used by the kit's auth and account components. */
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
-
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-
     --color-card: var(--card);
     --color-card-foreground: var(--card-foreground);
-
     --color-popover: var(--popover);
     --color-popover-foreground: var(--popover-foreground);
-
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
-
     --color-secondary: var(--secondary);
     --color-secondary-foreground: var(--secondary-foreground);
-
     --color-muted: var(--muted);
     --color-muted-foreground: var(--muted-foreground);
-
     --color-accent: var(--accent);
     --color-accent-foreground: var(--accent-foreground);
-
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
-
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
-
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
-}
+    --c-brand-50: 239 244 255;
+    --c-brand-100: 221 231 254;
+    --c-brand-200: 191 211 254;
+    --c-brand-300: 147 180 251;
+    --c-brand-400: 96 141 246;
+    --c-brand-500: 59 109 236;
+    --c-brand-600: 41 88 214;
+    --c-brand-700: 33 71 178;
+    --c-brand-800: 31 59 143;
+    --c-brand-900: 30 52 112;
+    --c-canvas: 246 246 247;
+    --c-card: 255 255 255;
+    --c-ink: 24 24 27;
+    --c-ink-muted: 99 99 107;
+    --c-ink-subtle: 161 161 170;
+    --c-line: 228 228 231;
+    --c-success-bg: 231 246 236;
+    --c-success-text: 22 122 64;
+    --c-warning-bg: 253 241 220;
+    --c-warning-text: 146 84 8;
+    --c-danger-bg: 253 232 230;
+    --c-danger-text: 180 35 24;
+    --radius-card-size: 0.75rem;
+    --shadow-soft-value: 0 1px 2px rgba(24, 24, 27, 0.04);
 
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --background: rgb(var(--c-canvas));
+    --foreground: rgb(var(--c-ink));
+    --card: rgb(var(--c-card));
+    --card-foreground: rgb(var(--c-ink));
+    --popover: rgb(var(--c-card));
+    --popover-foreground: rgb(var(--c-ink));
+    --primary: rgb(var(--c-brand-500));
+    --primary-foreground: rgb(255 255 255);
+    --secondary: rgb(var(--c-canvas));
+    --secondary-foreground: rgb(var(--c-ink));
+    --muted: rgb(var(--c-canvas));
+    --muted-foreground: rgb(var(--c-ink-muted));
+    --accent: rgb(var(--c-canvas));
+    --accent-foreground: rgb(var(--c-ink));
+    --destructive: rgb(var(--c-danger-text));
+    --destructive-foreground: rgb(var(--c-danger-text));
+    --border: rgb(var(--c-line));
+    --input: rgb(var(--c-line));
+    --ring: rgb(var(--c-brand-500));
+    --radius: 0.5rem;
 }
 
 @layer base {
@@ -137,7 +175,67 @@
         @apply border-border;
     }
 
+    html,
     body {
-        @apply bg-background text-foreground;
+        height: 100%;
+    }
+
+    body {
+        -webkit-font-smoothing: antialiased;
+        background: rgb(var(--c-canvas));
+        color: rgb(var(--c-ink));
+    }
+
+    ::selection {
+        background: rgb(var(--c-brand-200));
+        color: rgb(var(--c-ink));
+    }
+
+    :focus-visible {
+        outline: 2px solid rgb(var(--c-brand-500));
+        outline-offset: 2px;
+    }
+
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgb(var(--c-line));
+        border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgb(var(--c-ink-subtle));
+    }
+}
+
+/* Bills printed from the admin console: only the receipt, at thermal-roll width. */
+#print-root {
+    display: none;
+}
+
+@media print {
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+
+    body > *:not(#print-root) {
+        display: none !important;
+    }
+
+    #print-root {
+        display: block;
+    }
+
+    #print-root > div {
+        filter: none !important;
     }
 }

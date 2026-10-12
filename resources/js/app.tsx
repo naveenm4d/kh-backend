@@ -1,40 +1,36 @@
 import { createInertiaApp } from '@inertiajs/react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { initializeTheme } from '@/hooks/use-appearance';
-import AppLayout from '@/layouts/app-layout';
+import AdminLayout from '@/layouts/admin-layout';
 import AuthLayout from '@/layouts/auth-layout';
-import SettingsLayout from '@/layouts/settings/layout';
+import { ConfirmProvider } from '@admin/shared/components/ConfirmDialog';
+import { ToastProvider } from '@admin/shared/components/Toast';
+import { queryClient } from '@admin/shared/lib/queryClient';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Kulatissa Hardware';
 
 void createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
-        switch (true) {
-            case name === 'welcome':
-                return null;
-            case name.startsWith('auth/'):
-                return AuthLayout;
-            case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
-            default:
-                return AppLayout;
-        }
-    },
+    title: (title) => (title ? `${title} · ${appName}` : appName),
+    layout: (name) => (name.startsWith('auth/') ? AuthLayout : AdminLayout),
     strictMode: true,
     withApp(app) {
+        // Providers sit above the page layout, so the query cache (and anything it holds) survives
+        // moving between admin pages.
         return (
-            <TooltipProvider delayDuration={0}>
-                {app}
-                <Toaster />
-            </TooltipProvider>
+            <QueryClientProvider client={queryClient}>
+                <ToastProvider>
+                    <ConfirmProvider>
+                        <TooltipProvider delayDuration={0}>
+                            {app}
+                            <Toaster />
+                        </TooltipProvider>
+                    </ConfirmProvider>
+                </ToastProvider>
+            </QueryClientProvider>
         );
     },
     progress: {
-        color: '#4B5563',
+        color: '#3B6DEC',
     },
 });
-
-// This will set light / dark mode on load...
-initializeTheme();

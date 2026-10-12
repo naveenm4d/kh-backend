@@ -15,8 +15,10 @@ return [
     |
     */
 
+    // Off: the admin console is a signed-in internal tool, so pre-rendered HTML buys nothing,
+    // and its components (portals, print) are browser-only.
     'ssr' => [
-        'enabled' => true,
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 

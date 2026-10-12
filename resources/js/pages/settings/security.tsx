@@ -6,7 +6,6 @@ import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/security';
 import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
 import ManagePasskeys from '@/components/manage-passkeys';
 import type { Props as ManageTwoFactorProps } from '@/components/manage-two-factor';
@@ -23,12 +22,18 @@ export default function Security(props: Props) {
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
     return (
-        <>
-            <Head title="Security settings" />
+        <div className="flex-1 overflow-y-auto px-8 pt-7 pb-10">
+            <Head title="Password & sign-in" />
 
-            <h1 className="sr-only">Security settings</h1>
+            <h1 className="text-xl font-semibold tracking-[-0.01em] text-ink">
+                Password & sign-in
+            </h1>
+            <p className="mt-1 mb-8 text-[13px] text-ink-muted">
+                Your own account. Staff details and roles are managed on the
+                Users page.
+            </p>
 
-            <div className="space-y-6">
+            <div className="max-w-xl space-y-6">
                 <Heading
                     variant="small"
                     title="Update password"
@@ -134,15 +139,6 @@ export default function Security(props: Props) {
                 canManagePasskeys={props.canManagePasskeys}
                 passkeys={props.passkeys}
             />
-        </>
+        </div>
     );
 }
-
-Security.layout = {
-    breadcrumbs: [
-        {
-            title: 'Security settings',
-            href: edit(),
-        },
-    ],
-};
