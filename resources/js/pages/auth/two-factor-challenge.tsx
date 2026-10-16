@@ -1,8 +1,8 @@
 import { Form, Head, setLayoutProps } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
+import { Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
     InputOTP,
@@ -26,7 +26,7 @@ export default function TwoFactorChallenge() {
                 title: 'Recovery code',
                 description:
                     'Please confirm access to your account by entering one of your emergency recovery codes.',
-                toggleText: 'login using an authentication code',
+                toggleText: 'use an authentication code',
             };
         }
 
@@ -34,7 +34,7 @@ export default function TwoFactorChallenge() {
             title: 'Authentication code',
             description:
                 'Enter the authentication code provided by your authenticator application.',
-            toggleText: 'login using a recovery code',
+            toggleText: 'use a recovery code',
         };
     }, [showRecoveryInput]);
 
@@ -68,6 +68,8 @@ export default function TwoFactorChallenge() {
                                         name="recovery_code"
                                         type="text"
                                         placeholder="Enter recovery code"
+                                        autoComplete="one-time-code"
+                                        className="h-10 bg-white"
                                         autoFocus={showRecoveryInput}
                                         required
                                     />
@@ -104,13 +106,16 @@ export default function TwoFactorChallenge() {
                                 </div>
                             )}
 
-                            <Button
+                            <button
                                 type="submit"
-                                className="w-full"
                                 disabled={processing}
+                                className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-brand-500 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:opacity-70"
                             >
+                                {processing && (
+                                    <Loader2 className="size-4 animate-spin" />
+                                )}
                                 Continue
-                            </Button>
+                            </button>
 
                             <div className="text-center text-sm text-muted-foreground">
                                 <span>or you can </span>
