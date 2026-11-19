@@ -6,8 +6,8 @@ How to run the backend on a shared cPanel account that has MariaDB, phpMyAdmin a
 | --------------- | -------------------------------------------------------------------------- |
 | Your machine    | Build the release (`vendor/`, `public/build/`), export the database dump   |
 | GitHub          | `cpanel-deploy` branch: built files only; source stays on your other branches |
-| cPanel          | Clone of `cpanel-deploy` in `~/repositories/kh-backend`, `.env` beside it |
-| Subdomain       | Document root: `repositories/kh-backend/public`                    |
+| cPanel          | Clone of `cpanel-deploy` in `~/public_html/repositories/kh-backend`, `.env` beside it |
+| Subdomain       | Document root: `public_html/repositories/kh-backend/public`                    |
 
 The examples use `api.example.lk`; use your own subdomain.
 
@@ -44,7 +44,7 @@ This exports `HEAD` and installs production Composer packages. It builds the fro
 
 ## 3. Set up cPanel (first time only)
 
-1. **Subdomain.** Domains → Create a new domain: `api.example.lk`. Uncheck "share document root" and set the document root to `repositories/kh-backend/public`. Create the folder later in step 4 if cPanel complains that it's missing.
+1. **Subdomain.** Domains → Create a new domain: `api.example.lk`. Uncheck "share document root" and set the document root to `public_html/repositories/kh-backend/public`. Create the folder later in step 4 if cPanel complains that it's missing.
 2. **HTTPS.** SSL/TLS Status → run AutoSSL for the subdomain. Domains → turn on **Force HTTPS Redirect**. The tills refuse plain HTTP.
 3. **PHP.** MultiPHP Manager → set the subdomain to **PHP 8.4** (8.4.1 or newer). In Select PHP Version → Extensions (if your host has it), enable at least `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `dom`, `xml`, `ctype`, `fileinfo`, `iconv`, plus anything the build script listed.
 4. **Database.**
@@ -53,9 +53,9 @@ This exports `HEAD` and installs production Composer packages. It builds the fro
    3. If the file is over the upload limit shown there, ask your host to raise it or to import it for you.
 5. **Code.** Git Version Control → Create:
    - Clone URL: `https://github.com/naveenm4d/kh-backend.git`. For a private repo, use a GitHub fine-grained token with read-only *Contents* access on this one repo: `https://<token>@github.com/naveenm4d/kh-backend.git`. If your plan has SSH Access → Manage Keys, a read-only deploy key works too.
-   - Repository path: `repositories/kh-backend`.
+   - Repository path: `public_html/repositories/kh-backend`.
    - After it clones: Manage → Basic Information → **Checked-Out Branch: `cpanel-deploy`**.
-6. **`.env`.** File Manager → `repositories/kh-backend` → create `.env` (turn on "Show Hidden Files"):
+6. **`.env`.** File Manager → `public_html/repositories/kh-backend` → create `.env` (turn on "Show Hidden Files"):
 
    ```dotenv
    APP_NAME="Kulatissa Hardware"
@@ -96,7 +96,7 @@ This exports `HEAD` and installs production Composer packages. It builds the fro
    - checks that `vendor/`, `public/build/` and `.env` are there;
    - runs `artisan migrate --force` and `artisan optimize`.
 
-   Its output, errors included, is in the newest `~/.cpanel/logs/vc_*_git_deploy.log`. The last line should read `Deploy finished.` If you cloned to a different path than `/home/subaorac/repositories/kh-backend`, change the path in `.cpanel.yml` (on your source branch) and rebuild.
+   Its output, errors included, is in the newest `~/.cpanel/logs/vc_*_git_deploy.log`. The last line should read `Deploy finished.` The script path in `.cpanel.yml` must match where the repository is cloned (currently `/home/subaorac/public_html/repositories/kh-backend`); change it on your source branch and rebuild if you move it.
 
 Check:
 
