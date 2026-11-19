@@ -39,7 +39,7 @@ if [ ! -f .env ]; then
 fi
 
 for ext in pdo_mysql mbstring openssl tokenizer dom ctype fileinfo; do
-    "$php" -m | grep -qix "$ext" || echo "Warning: PHP extension $ext is not enabled for the CLI."
+    "$php" -r "exit(extension_loaded('$ext') ? 0 : 1);" || echo "Warning: PHP extension $ext is not enabled for the CLI."
 done
 
 mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache
