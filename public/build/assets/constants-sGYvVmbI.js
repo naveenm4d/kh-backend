@@ -1,0 +1,1 @@
+var e={PENDING:`warning`,ISSUED:`brand`,COMPLETED:`success`,CANCELLED:`danger`},t={CASH:`Cash`,CARD:`Card`,"BANK TRANSFER":`Bank transfer`,CHEQUE:`Cheque`,CREDIT:`Credit`};export{e as n,t};

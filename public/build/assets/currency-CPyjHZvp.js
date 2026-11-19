@@ -1,0 +1,1 @@
+function e(e){return`Rs. `+Math.round(e||0).toLocaleString(`en-US`)}function t(e){let t=e.replace(/[^0-9.]/g,``),n=parseFloat(t);return Number.isNaN(n)?0:n}export{t as n,e as t};
