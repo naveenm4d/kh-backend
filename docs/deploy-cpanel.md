@@ -91,8 +91,12 @@ This exports `HEAD` and installs production Composer packages. It builds the fro
 
    Set its permissions to `600`. It lives outside the document root, so the web can't reach it.
 7. **Writable folders.** `storage/` (and everything under it) and `bootstrap/cache/` need `755` on folders. That is cPanel's default, so usually there's nothing to do.
-8. **Deploy.** Git Version Control → Manage → Pull or Deploy → **Deploy HEAD Commit**. `.cpanel.yml` runs `php artisan migrate --force` and `php artisan optimize`.
-   - If you cloned to a different path, change `APP_DIR` in `.cpanel.yml` (on your source branch) and rebuild.
+8. **Deploy.** Git Version Control → Manage → Pull or Deploy → **Deploy HEAD Commit**. `.cpanel.yml` runs `scripts/cpanel-deploy.sh`, which:
+   - finds a PHP 8.4+ command-line binary (MultiPHP only sets the website's version, not the shell's);
+   - checks that `vendor/`, `public/build/` and `.env` are there;
+   - runs `artisan migrate --force` and `artisan optimize`.
+
+   Its output, errors included, is in the newest `~/.cpanel/logs/vc_*_git_deploy.log`. The last line should read `Deploy finished.` If you cloned to a different path than `/home/subaorac/repositories/kh-backend`, change the path in `.cpanel.yml` (on your source branch) and rebuild.
 
 Check:
 
