@@ -44,6 +44,19 @@ done
 
 mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache
 
+# cPanel's Git Version Control clones into a 0700 folder. The web server serves files as another
+# user, so it must be able to pass through every folder down to public/, or LiteSpeed answers 404
+# for everything. PHP runs as the account owner, so .env stays private (0600).
+dir="$app_dir"
+while [ "$dir" != "$HOME" ] && [ "$dir" != "$HOME/public_html" ] && [ "$dir" != "/" ]; do
+    chmod 755 "$dir"
+    dir="$(dirname "$dir")"
+done
+find public -type d -exec chmod 755 {} +
+find public -type f -exec chmod 644 {} +
+chmod 755 storage bootstrap/cache
+chmod 600 .env
+
 "$php" artisan migrate --force --no-interaction || { echo "Migration failed (see above)."; exit 1; }
 "$php" artisan optimize --no-interaction || { echo "Caching failed (see above)."; exit 1; }
 
