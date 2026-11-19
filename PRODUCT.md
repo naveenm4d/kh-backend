@@ -29,7 +29,7 @@ A point-of-sale and back-office app for Kulatissa Hardware, a single hardware st
 
 ## Capabilities and Constraints
 
-- All data and business rules live in the Laravel backend (PostgreSQL). The admin console is part of it; the till is a thin client that calls its POS API, keeps a synced in-memory copy of the catalogue, and prints receipts locally (ESC/POS).
+- All data and business rules live in the Laravel backend (MariaDB). The admin console is part of it; the till is a thin client that calls its POS API, keeps a synced in-memory copy of the catalogue, and prints receipts locally (ESC/POS).
 - The admin console covers Dashboard, Reports, Customers, Orders, Inventory, Catalog, Users and Settings (including registering tills). The till is the cashier screen only.
 - Sales figures are computed from the bills themselves (units sold this week/month, last 30 days), so labels mean what they say.
 

@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mariadb'),
 
     /*
     |--------------------------------------------------------------------------
@@ -97,6 +97,22 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+        ],
+
+        // The old Postgres install, read only by `php artisan db:copy-from-postgres` when moving
+        // its data into MariaDB.
+        'legacy_pgsql' => [
+            'driver' => 'pgsql',
+            'host' => env('LEGACY_PG_HOST', '127.0.0.1'),
+            'port' => env('LEGACY_PG_PORT', '5432'),
+            'database' => env('LEGACY_PG_DATABASE', 'kulatissa'),
+            'username' => env('LEGACY_PG_USERNAME', 'kulatissa'),
+            'password' => env('LEGACY_PG_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
         ],
 
         'sqlsrv' => [

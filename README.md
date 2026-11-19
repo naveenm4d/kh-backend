@@ -1,14 +1,14 @@
 # Kulatissa Hardware — backend
 
-This app is the server for Kulatissa Hardware. It holds all the shop's data and business rules in PostgreSQL, built on Laravel 13. It runs the **admin console** in the browser (Inertia + React) and the **POS API** the cashier tills use. The tills are the desktop app in `../desktopapp`.
+This app is the server for Kulatissa Hardware. It holds all the shop's data and business rules in MariaDB, built on Laravel 13. It runs the **admin console** in the browser (Inertia + React) and the **POS API** the cashier tills use. The tills are the desktop app in `../desktopapp`.
 
 ## Local setup
 
-Requirements: PHP 8.3+, Composer, Node 22+, and Docker (used for Postgres only).
+Requirements: PHP 8.4+, Composer, Node 22+, and Docker (used for MariaDB only).
 
 ```bash
 cp .env.example .env          # set DB_PASSWORD (and ADMIN_EMAIL / ADMIN_PASSWORD if you like)
-docker compose up -d          # Postgres 17 on :5432 (+ a "testing" database for the test suite)
+docker compose up -d          # MariaDB 10.11 on :3306 (+ a "testing" database for the test suite)
 composer install && npm install
 php artisan key:generate
 php artisan migrate --seed    # roles, shop settings, first admin
@@ -32,13 +32,15 @@ Sign in at http://localhost:8000. Demo accounts:
 ## Checks
 
 ```bash
-composer test        # Pint, PHPStan (level 7), Pest — needs the docker Postgres running
+composer test        # Pint, PHPStan (level 7), Pest — needs the docker MariaDB running
 npm run check        # lint + formatting
 npm run types:check
 npm run build
 ```
 
 ## Production notes
+
+Hosting on cPanel (MariaDB, no SSH): follow [docs/deploy-cpanel.md](docs/deploy-cpanel.md).
 
 Set these in `.env`:
 

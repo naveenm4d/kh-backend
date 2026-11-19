@@ -54,9 +54,10 @@ final class DashboardSummary
             ->whereBetween('orders.sold_on', [$monthStart->toDateString(), $today->toDateString()]);
 
         $categoryBreakdown = (clone $monthLines)
-            ->groupByRaw("coalesce(products.\"group\", 'Other')")
-            ->selectRaw("coalesce(products.\"group\", 'Other') as grp, sum(order_items.total) as value")
+            ->groupByRaw("coalesce(products.`group`, 'Other')")
+            ->selectRaw("coalesce(products.`group`, 'Other') as grp, sum(order_items.total) as value")
             ->orderByDesc('value')
+            ->orderBy('grp')
             ->get()
             ->map(fn ($r) => ['group' => $r->grp, 'value' => (float) $r->value])
             ->all();
@@ -65,12 +66,13 @@ final class DashboardSummary
             ->groupBy('order_items.product_id', 'order_items.name', 'products.price')
             ->selectRaw('order_items.name, sum(order_items.qty) as units, coalesce(products.price, 0) as price, sum(order_items.total) as revenue')
             ->orderByDesc('revenue')
+            ->orderBy('order_items.name')
             ->limit(7)
             ->get()
             ->map(fn ($r) => ['name' => $r->name, 'units' => (float) $r->units, 'price' => (float) $r->price, 'revenue' => (float) $r->revenue])
             ->all();
 
-        $credit = Customer::query()->toBase()->selectRaw('coalesce(sum(credit), 0) as total, count(*) filter (where credit > 0) as owing')->first();
+        $credit = Customer::query()->toBase()->selectRaw('coalesce(sum(credit), 0) as total, count(case when credit > 0 then 1 end) as owing')->first();
         $topDebtors = Customer::query()
             ->where('credit', '>', 0)
             ->orderByDesc('credit')

@@ -57,10 +57,18 @@ class Order extends Model
         ];
     }
 
-    /** Next invoice number from a Postgres sequence: gap-tolerant and safe under concurrency. */
+    /**
+     * Next invoice number. The counter row is locked until the bill's transaction commits, so
+     * concurrent checkouts queue for it, and a bill that rolls back gives its number back.
+     */
     public static function nextInvoice(): string
     {
-        $next = (int) DB::scalar("select nextval('order_invoice_seq')");
+        $next = DB::transaction(function (): int {
+            $value = (int) DB::table('counters')->where('name', 'invoice')->lockForUpdate()->value('value') + 1;
+            DB::table('counters')->updateOrInsert(['name' => 'invoice'], ['value' => $value]);
+
+            return $value;
+        });
 
         return sprintf('INV%06d', $next);
     }

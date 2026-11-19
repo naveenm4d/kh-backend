@@ -27,7 +27,7 @@ final class ReportSummary
         $active = fn () => $inRange()->active();
 
         $totals = $active()->toBase()->selectRaw(
-            'coalesce(sum(amount), 0) as revenue, count(*) as bills, coalesce(sum(amount) filter (where payment = ?), 0) as credit',
+            'coalesce(sum(amount), 0) as revenue, count(*) as bills, coalesce(sum(case when payment = ? then amount else 0 end), 0) as credit',
             [PaymentMethod::Credit->value],
         )->first();
         $cancelled = $inRange()->where('status', OrderStatus::Cancelled->value)->count();
@@ -38,11 +38,11 @@ final class ReportSummary
             ->toBase()
             ->when(
                 $granularity === 'month',
-                fn ($q) => $q->groupByRaw("to_char(sold_on, 'YYYY-MM')")->selectRaw("to_char(sold_on, 'YYYY-MM') as key, sum(amount) as revenue, count(*) as bills"),
-                fn ($q) => $q->groupByRaw("to_char(sold_on, 'YYYY-MM-DD')")->selectRaw("to_char(sold_on, 'YYYY-MM-DD') as key, sum(amount) as revenue, count(*) as bills"),
+                fn ($q) => $q->groupByRaw("date_format(sold_on, '%Y-%m')")->selectRaw("date_format(sold_on, '%Y-%m') as bucket, sum(amount) as revenue, count(*) as bills"),
+                fn ($q) => $q->groupByRaw("date_format(sold_on, '%Y-%m-%d')")->selectRaw("date_format(sold_on, '%Y-%m-%d') as bucket, sum(amount) as revenue, count(*) as bills"),
             )
             ->get()
-            ->keyBy('key');
+            ->keyBy('bucket');
 
         $series = [];
         if ($granularity === 'month') {
@@ -61,6 +61,7 @@ final class ReportSummary
             ->select([$column.' as key'])
             ->selectRaw('sum(amount) as revenue, count(*) as bills')
             ->orderByDesc('revenue')
+            ->orderBy($column)
             ->get()
             ->map(fn ($r) => ['key' => (string) $r->key, 'revenue' => (float) $r->revenue, 'bills' => (int) $r->bills])
             ->all();
@@ -70,11 +71,12 @@ final class ReportSummary
             ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
             ->where('orders.status', '!=', OrderStatus::Cancelled->value)
             ->whereBetween('orders.sold_on', [$fromIso, $toIso])
-            ->groupByRaw("coalesce(products.\"group\", 'Other')")
-            ->selectRaw("coalesce(products.\"group\", 'Other') as key, sum(order_items.total) as revenue, count(distinct orders.id) as bills")
+            ->groupByRaw("coalesce(products.`group`, 'Other')")
+            ->selectRaw("coalesce(products.`group`, 'Other') as bucket, sum(order_items.total) as revenue, count(distinct orders.id) as bills")
             ->orderByDesc('revenue')
+            ->orderBy('bucket')
             ->get()
-            ->map(fn ($r) => ['key' => $r->key, 'revenue' => (float) $r->revenue, 'bills' => (int) $r->bills])
+            ->map(fn ($r) => ['key' => (string) $r->bucket, 'revenue' => (float) $r->revenue, 'bills' => (int) $r->bills])
             ->all();
 
         return [

@@ -51,15 +51,23 @@ return new class extends Migration
             $table->index(['customer_id', 'sold_on']);
             $table->index('updated_at'); // tills ask which bills changed (sync/orders)
         });
-        // Invoice numbers. Owned by the table so it's dropped with it.
-        DB::statement('CREATE SEQUENCE order_invoice_seq START 1 OWNED BY orders.invoice');
+
+        // Named counters; 'invoice' holds the last invoice number issued (see Order::nextInvoice).
+        Schema::create('counters', function (Blueprint $table) {
+            $table->string('name', 32)->primary();
+            $table->unsignedBigInteger('value')->default(0);
+        });
+        DB::table('counters')->insert(['name' => 'invoice', 'value' => 0]);
 
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
-            $table->integer('qty');
+            $table->decimal('qty', 12, 3);
+            // The unit the line was sold in, kept so old bills print the same after the catalogue changes.
+            $table->string('unit', 24)->default('Piece');
+            $table->boolean('unit_measured')->default(false);
             $table->decimal('unit_price', 12, 2);
             $table->decimal('discount_pct', 7, 4)->default(0);
             $table->decimal('total', 12, 2);
@@ -89,7 +97,7 @@ return new class extends Migration
         Schema::create('stock_movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->integer('qty_delta');
+            $table->decimal('qty_delta', 12, 3);
             $table->string('reason', 16);
             $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -121,6 +129,7 @@ return new class extends Migration
         Schema::dropIfExists('stock_movements');
         Schema::dropIfExists('customer_payments');
         Schema::dropIfExists('order_items');
+        Schema::dropIfExists('counters');
         Schema::dropIfExists('orders');
         Schema::dropIfExists('customers');
     }
