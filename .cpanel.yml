@@ -4,4 +4,4 @@
 # CLI, migrates and caches; its output goes to ~/.cpanel/logs/vc_*_git_deploy.log.
 deployment:
   tasks:
-    - /bin/bash /home/subaorac/public_html/subaora.com/kh-backend/scripts/cpanel-deploy.sh /home/subaorac/repositories/kh-backend
+    - /bin/bash /home/subaorac/public_html/repositories/kh-backend/scripts/cpanel-deploy.sh /home/subaorac/repositories/kh-backend
