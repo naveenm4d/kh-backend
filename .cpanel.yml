@@ -1,10 +1,7 @@
 ---
-# cPanel Git Version Control runs these after "Deploy HEAD Commit", in one shell, on the
-# `cpanel-deploy` branch built by scripts/build-cpanel-release.sh (vendor/ and public/build included).
-# APP_DIR must be the folder the repository was cloned into. /usr/local/bin/php follows the PHP
-# version MultiPHP Manager sets for the domain.
+# cPanel Git Version Control runs this after "Deploy HEAD Commit", on the `cpanel-deploy` branch built
+# by scripts/build-cpanel-release.sh (vendor/ and public/build included). The script finds a PHP 8.4
+# CLI, migrates and caches; its output goes to ~/.cpanel/logs/vc_*_git_deploy.log.
 deployment:
   tasks:
-    - export APP_DIR=/home/subaorac/repositories/kh-backend
-    - cd "$APP_DIR" && /usr/local/bin/php artisan migrate --force
-    - cd "$APP_DIR" && /usr/local/bin/php artisan optimize
+    - /bin/bash /home/subaorac/repositories/kh-backend/scripts/cpanel-deploy.sh /home/subaorac/repositories/kh-backend
