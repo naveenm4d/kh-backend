@@ -5,4 +5,4 @@
 # ~/.cpanel/logs/vc_*_git_deploy.log. The path below must be where the repository is cloned.
 deployment:
   tasks:
-    - /bin/bash /home/subaorac/public_html/repositories/kh-backend/scripts/cpanel-deploy.sh
+    - /bin/bash /home/subaorac/public_html/subaora.com/repositories/kh-backend/scripts/cpanel-deploy.sh
