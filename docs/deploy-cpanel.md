@@ -1,13 +1,13 @@
 # Deploying to cPanel
 
-How to run the backend on a shared cPanel account that has MariaDB, phpMyAdmin and Git Version Control but no SSH. Nothing is built on the server. GitHub Actions builds each release onto a deploy branch, and you pull and deploy it in cPanel.
+How to run the backend on a shared cPanel account that has MariaDB, phpMyAdmin and Git Version Control but no SSH. Nothing is built on the server. You build each release on your machine onto a deploy branch (`composer release`), and cPanel pulls and deploys it.
 
-| Source branch | Environment | Deploy branch       | When                                           |
-| ------------- | ----------- | ------------------- | ---------------------------------------------- |
-| `dev`         | testing     | `cpanel-deploy-dev` | Built automatically on every push to `dev`     |
-| `main`        | production  | `cpanel-deploy`     | Only when you run **Build production** by hand |
+| Command                    | Deploy branch       | For                                      |
+| -------------------------- | ------------------- | ---------------------------------------- |
+| `composer release`         | `cpanel-deploy`     | production (the clone cPanel runs today) |
+| `composer release:testing` | `cpanel-deploy-dev` | a testing clone, if you set one up       |
 
-Each environment is its own cPanel clone of its deploy branch, with its own `.env`, database and domain. Until the production clone exists, both environments point at `/home/subaorac/public_html/subaora.com/repositories/kh-backend` and https://pos.subaora.com. Deploy branches hold built files only (`vendor/`, `public/build/`), so never check them out locally.
+Each cPanel clone checks out one deploy branch and has its own `.env`. Today there's one clone, `/home/subaorac/public_html/subaora.com/repositories/kh-backend`, serving https://pos.subaora.com. Deploy branches hold built files only (`vendor/`, `public/build/`).
 
 The examples use `api.example.lk`; use your own subdomain.
 
@@ -32,52 +32,31 @@ scripts/export-mariadb-dump.sh       # -> storage/app/kulatissa-<date>.sql.gz
 - **Keep the same `APP_KEY`.** The production `.env` needs the `APP_KEY` from the `.env` that wrote this data. 2FA secrets and session data are encrypted with it.
 - Passkeys belong to a domain. Anyone who used one on another address registers it again.
 
-## 2. Builds (GitHub Actions)
+## 2. Build a release
 
-GitHub Actions tests and builds each release. **You deploy it in cPanel** (section 4).
-
-| Workflow                                 | Trigger                        | Does                                                           |
-| ---------------------------------------- | ------------------------------ | -------------------------------------------------------------- |
-| `.github/workflows/tests.yml`            | pull requests, and both builds | Pint, PHPStan, Pest on MariaDB, frontend checks                |
-| `.github/workflows/build-testing.yml`    | push to `dev` (or run by hand) | tests → build and push `cpanel-deploy-dev`                     |
-| `.github/workflows/build-production.yml` | **by hand only**, type `build` | tests → build and push `cpanel-deploy` from the current `main` |
-
-Both share `.github/workflows/cpanel-pipeline.yml`, which runs `scripts/build-cpanel-release.sh` with the environment's `DEPLOY_BRANCH` and `APP_PATH`. The script writes that branch's own `.cpanel.yml` from `APP_PATH`, so the source repo has no `.cpanel.yml`. The run's summary page shows which branch is ready and where to deploy it.
-
-**Setup (once):** GitHub → repo **Settings → Environments** → create **`testing`** and **`production`**, each with two variables:
-
-| Variable        | testing                                                          | production                              |
-| --------------- | ---------------------------------------------------------------- | --------------------------------------- |
-| `DEPLOY_BRANCH` | `cpanel-deploy-dev`                                              | `cpanel-deploy`                         |
-| `APP_PATH`      | `/home/subaorac/public_html/subaora.com/repositories/kh-backend` | same, until the production clone exists |
-
-Optionally, under `production` → Deployment branches, allow only `main`.
-
-**Shipping:**
-
-- **Testing:** push to `dev`. When **Build testing** is green, deploy `cpanel-deploy-dev` in cPanel.
-- **Production:**
-    1. Merge `dev` into `main`.
-    2. Go to **Actions → Build production → Run workflow**, type `build`, and click **Run**.
-    3. When it's green, deploy `cpanel-deploy` in cPanel.
-
-**Adding the production site later:**
-
-1. Create a second clone in Git Version Control on branch `cpanel-deploy`.
-2. Add a domain whose document root is that clone's `/public`, on PHP 8.4.
-3. Create a separate database and the clone's `.env`, then import the data.
-4. Change the `production` environment's `APP_PATH`, then run **Build production** once.
-
-No code changes are needed.
-
-**Building by hand** (local, rarely needed), on a clean working tree:
+On a clean working tree (commit first), from the branch you want to ship:
 
 ```bash
-scripts/build-cpanel-release.sh --push                                          # production branch
-TARGET_BRANCH=cpanel-deploy-dev APP_PATH=/home/subaorac/... scripts/build-cpanel-release.sh --push   # testing
+composer release            # production: builds HEAD onto cpanel-deploy and pushes it
+composer release:testing    # testing: builds HEAD onto cpanel-deploy-dev and pushes it
 ```
 
-It prints the PHP version and extensions the server needs.
+Both run `scripts/build-cpanel-release.sh --push`, which:
+
+1. Exports `HEAD`.
+2. Installs production Composer packages and builds the frontend.
+3. Writes the branch's `.cpanel.yml`, pointing at the server clone.
+4. Commits the result as `Release <sha> to <branch>` and pushes it.
+
+At the end it prints the PHP version and extensions the server needs. Then deploy it in cPanel (section 4).
+
+The server path defaults to `/home/subaorac/public_html/subaora.com/repositories/kh-backend`. For a clone somewhere else (for example a future production clone), set it for that run:
+
+```bash
+APP_PATH=/home/subaorac/.../kh-backend composer release
+```
+
+The source repo has no `.cpanel.yml`, because each deploy branch gets its own. Never `git checkout` a deploy branch locally: switching back deletes your `vendor/`. If it happens, run `composer install`.
 
 ## 3. Set up cPanel (first time only)
 
@@ -91,7 +70,7 @@ It prints the PHP version and extensions the server needs.
 5. **Code.** Git Version Control → Create:
     - Clone URL: `https://github.com/naveenm4d/kh-backend.git`. For a private repo, use a GitHub fine-grained token with read-only _Contents_ access on this one repo: `https://<token>@github.com/naveenm4d/kh-backend.git`. If your plan has SSH Access → Manage Keys, a read-only deploy key works too.
     - Repository path: `public_html/subaora.com/repositories/kh-backend`.
-    - After it clones: Manage → Basic Information → **Checked-Out Branch**: that environment's deploy branch (`cpanel-deploy-dev` or `cpanel-deploy`). Set it to the branch you want that clone to run.
+    - After it clones: Manage → Basic Information → **Checked-Out Branch**: that environment's deploy branch (`cpanel-deploy-dev` or `cpanel-deploy`). Set it to the branch you build for that clone.
 6. **`.env`.** File Manager → `public_html/subaora.com/repositories/kh-backend` → create `.env` (turn on "Show Hidden Files"):
 
     ```dotenv
@@ -134,7 +113,7 @@ It prints the PHP version and extensions the server needs.
     - checks that `vendor/`, `public/build/` and `.env` are there;
     - runs `artisan migrate --force` and `artisan optimize`.
 
-    Its output, errors included, is in the newest `~/.cpanel/logs/vc_*_git_deploy.log`. The last line should read `Deploy finished.` The path inside `.cpanel.yml` comes from the environment's `APP_PATH`; if you move a clone, change `APP_PATH`, rebuild, and deploy again.
+    Its output, errors included, is in the newest `~/.cpanel/logs/vc_*_git_deploy.log`. The last line should read `Deploy finished.` The path inside `.cpanel.yml` comes from `APP_PATH` at build time; if you move a clone, rebuild with the new `APP_PATH` and deploy again.
 
 Check:
 
@@ -145,11 +124,9 @@ Check:
 
 ## 4. Updating
 
-1. Get a build:
-    - **Testing:** push to `dev`, and wait for **Build testing** to go green.
-    - **Production:** merge into `main`, then run **Build production** and wait for it to go green.
+1. Commit your changes, then run `composer release` (or `composer release:testing`).
 2. In cPanel → Git Version Control → the clone → **Manage**:
-    1. Make sure **Basic Information → Checked-Out Branch** is the deploy branch you want: `cpanel-deploy-dev` for testing, `cpanel-deploy` for production.
+    1. Check that **Basic Information → Checked-Out Branch** is the branch you just built.
     2. Under **Pull or Deploy**, click **Update from Remote**, then **Deploy HEAD Commit**.
 3. Check the newest `~/.cpanel/logs/vc_*_git_deploy.log`. It should end with `Deploy finished.`
 

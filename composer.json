@@ -67,6 +67,14 @@
             "npm run types:check",
             "@test"
         ],
+        "release": [
+            "Composer\\Config::disableProcessTimeout",
+            "bash scripts/build-cpanel-release.sh --push"
+        ],
+        "release:testing": [
+            "Composer\\Config::disableProcessTimeout",
+            "TARGET_BRANCH=cpanel-deploy-dev bash scripts/build-cpanel-release.sh --push"
+        ],
         "types:check": [
             "phpstan analyse --memory-limit=1G"
         ],
@@ -94,6 +102,10 @@
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
+    },
+    "scripts-descriptions": {
+        "release": "Build HEAD onto the cpanel-deploy branch and push it, ready to deploy from cPanel",
+        "release:testing": "Build HEAD onto the cpanel-deploy-dev branch and push it, ready to deploy from cPanel"
     },
     "extra": {
         "laravel": {
