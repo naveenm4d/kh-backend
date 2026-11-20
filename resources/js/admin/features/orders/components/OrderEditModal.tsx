@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Minus, Plus, X, Save } from 'lucide-react';
+import { cn } from '@admin/shared/lib/cn';
 import { Dialog } from '@admin/shared/components/Dialog';
 import { Button } from '@admin/shared/components/Button';
 import { SearchBar } from '@admin/shared/components/SearchBar';
@@ -11,7 +12,11 @@ import { roundQty } from '@admin/shared/utils/units';
 import { useProducts } from '@admin/features/products/hooks';
 import { useUpdateOrderItems } from '@admin/features/orders/hooks';
 import type { Order } from '@admin/features/orders/types';
-import { autoDiscountPct, listPrice } from '@admin/features/products/pricing';
+import {
+    autoDiscountPct,
+    formatPct,
+    listPrice,
+} from '@admin/features/products/pricing';
 import type { Product } from '@admin/features/products/types';
 
 interface EditLine {
@@ -249,124 +254,32 @@ export function OrderEditModal({
         >
             {order && (
                 <div className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-2">
-                        {lines.map((line) => {
-                            const atMax = line.qty >= maxQtyFor(line.productId);
-                            return (
-                                <div
+                    {lines.length > 0 ? (
+                        <div className="flex flex-col rounded-xl border border-line bg-white px-3">
+                            {lines.map((line) => (
+                                <EditLineItem
                                     key={line.productId}
-                                    className="flex flex-col gap-1.5 rounded-xl border border-line bg-white px-3 py-2.5"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <div className="min-w-0 flex-1">
-                                            <div className="truncate text-[13px] font-bold">
-                                                {line.name}
-                                            </div>
-                                            <div className="text-xs text-ink-muted">
-                                                {formatCurrency(line.unitPrice)}{' '}
-                                                {line.measured
-                                                    ? `/ ${line.unit}`
-                                                    : 'ea'}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <button
-                                                onClick={() =>
-                                                    decQty(line.productId)
-                                                }
-                                                className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-line bg-canvas active:scale-90"
-                                            >
-                                                <Minus className="size-3.5" />
-                                            </button>
-                                            <QtyInput
-                                                aria-label={`Quantity of ${line.name} (${line.unit})`}
-                                                value={line.qty}
-                                                decimals={decimalsFor(line)}
-                                                onChange={(qty) =>
-                                                    setQty(line.productId, qty)
-                                                }
-                                            />
-                                            <button
-                                                onClick={() =>
-                                                    incQty(line.productId)
-                                                }
-                                                disabled={atMax}
-                                                title={
-                                                    atMax
-                                                        ? 'No more stock available'
-                                                        : undefined
-                                                }
-                                                className="flex size-7 cursor-pointer items-center justify-center rounded-lg border border-line bg-canvas active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
-                                            >
-                                                <Plus className="size-3.5" />
-                                            </button>
-                                        </div>
-                                        <div className="w-20 shrink-0 text-right text-sm font-extrabold">
-                                            {formatCurrency(lineTotal(line))}
-                                        </div>
-                                        <button
-                                            onClick={() =>
-                                                removeLine(line.productId)
-                                            }
-                                            className="cursor-pointer text-ink-muted hover:text-danger-text"
-                                        >
-                                            <X className="size-3.5" />
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-xs text-ink-muted">
-                                            Discount
-                                        </span>
-                                        <input
-                                            value={line.discountPct}
-                                            onChange={(e) =>
-                                                setDiscount(
-                                                    line.productId,
-                                                    parseFloat(
-                                                        e.target.value,
-                                                    ) || 0,
-                                                )
-                                            }
-                                            className="h-6.5 w-12 rounded-md border border-line text-center text-xs font-bold outline-none"
-                                        />
-                                        <span className="text-xs text-ink-muted">
-                                            %
-                                        </span>
-                                    </div>
-                                    <div className="flex overflow-hidden rounded-lg border border-line text-xs font-bold">
-                                        <button
-                                            onClick={() =>
-                                                setSource(
-                                                    line.productId,
-                                                    'STORE',
-                                                )
-                                            }
-                                            className={`flex-1 cursor-pointer py-1.5 transition-colors ${line.source === 'STORE' ? 'bg-success-text text-white' : 'bg-canvas text-ink-muted hover:bg-line'}`}
-                                        >
-                                            Store
-                                        </button>
-                                        <div className="w-px bg-line" />
-                                        <button
-                                            onClick={() =>
-                                                setSource(
-                                                    line.productId,
-                                                    'WAREHOUSE',
-                                                )
-                                            }
-                                            className={`flex-1 cursor-pointer py-1.5 transition-colors ${line.source === 'WAREHOUSE' ? 'bg-yellow-400 text-ink' : 'bg-canvas text-ink-muted hover:bg-line'}`}
-                                        >
-                                            Warehouse
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {lines.length === 0 && (
-                            <div className="py-4 text-center text-sm text-ink-muted">
-                                No items — add at least one below.
-                            </div>
-                        )}
-                    </div>
+                                    line={line}
+                                    max={maxQtyFor(line.productId)}
+                                    decimals={decimalsFor(line)}
+                                    onInc={() => incQty(line.productId)}
+                                    onDec={() => decQty(line.productId)}
+                                    onQty={(qty) => setQty(line.productId, qty)}
+                                    onDiscount={(pct) =>
+                                        setDiscount(line.productId, pct)
+                                    }
+                                    onSource={(source) =>
+                                        setSource(line.productId, source)
+                                    }
+                                    onRemove={() => removeLine(line.productId)}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="py-4 text-center text-sm text-ink-muted">
+                            No items — add at least one below.
+                        </div>
+                    )}
 
                     <div className="flex flex-col gap-2">
                         <SearchBar
@@ -418,5 +331,175 @@ export function OrderEditModal({
                 </div>
             )}
         </Dialog>
+    );
+}
+
+const stepBtn =
+    'flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-transform active:scale-90 active:bg-line disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100';
+
+/** One bill line, laid out like the till's cart line (features/pos/components/CartLineItem in the desktop app). */
+function EditLineItem({
+    line,
+    max,
+    decimals,
+    onInc,
+    onDec,
+    onQty,
+    onDiscount,
+    onSource,
+    onRemove,
+}: {
+    line: EditLine;
+    max: number;
+    decimals: number;
+    onInc: () => void;
+    onDec: () => void;
+    onQty: (qty: number) => void;
+    onDiscount: (pct: number) => void;
+    onSource: (source: 'STORE' | 'WAREHOUSE') => void;
+    onRemove: () => void;
+}) {
+    // Set when a typed quantity was more than the stock, so the admin sees why it was lowered.
+    const [overStock, setOverStock] = useState(false);
+    const atMax = line.qty >= max;
+    const fullTotal = line.unitPrice * line.qty;
+    const total = lineTotal(line);
+    const saved = fullTotal - total;
+    const perUnit = line.measured ? `/ ${line.unit}` : 'each';
+
+    return (
+        <div className="flex flex-col gap-2 border-b border-line py-3 last:border-b-0">
+            <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                    <div className="line-clamp-2 text-sm leading-snug font-bold">
+                        {line.name}
+                    </div>
+                    <div className="mt-0.5 text-xs text-ink-muted tabular-nums">
+                        {formatCurrency(line.unitPrice)} {perUnit}
+                        {line.discountPct > 0 && (
+                            <span className="font-semibold text-success-text">
+                                {' '}
+                                · −{formatPct(line.discountPct)}%
+                            </span>
+                        )}
+                    </div>
+                    {saved > 0.004 && (
+                        <div className="mt-0.5 text-xs font-semibold text-success-text tabular-nums">
+                            Saves {formatCurrency(saved)}
+                        </div>
+                    )}
+                </div>
+                <div className="flex shrink-0 flex-col items-end pt-px tabular-nums">
+                    <div className="text-sm font-extrabold">
+                        {formatCurrency(total)}
+                    </div>
+                    {saved > 0.004 && (
+                        <div className="text-xs text-ink-subtle line-through">
+                            {formatCurrency(fullTotal)}
+                        </div>
+                    )}
+                </div>
+                <button
+                    type="button"
+                    onClick={onRemove}
+                    aria-label={`Remove ${line.name}`}
+                    className="-mt-1 -mr-1 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted hover:bg-danger-bg hover:text-danger-text"
+                >
+                    <X className="size-4" />
+                </button>
+            </div>
+
+            {/* Quantity, discount and stock source share one row to keep each line short. */}
+            <div className="grid grid-cols-3 gap-1.5">
+                <div className="flex h-11 min-w-0 items-center rounded-xl bg-canvas p-1">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setOverStock(false);
+                            onDec();
+                        }}
+                        aria-label="Decrease quantity"
+                        className={stepBtn}
+                    >
+                        <Minus className="size-4" />
+                    </button>
+                    <QtyInput
+                        aria-label={`Quantity of ${line.name} (${line.unit})`}
+                        value={line.qty}
+                        decimals={decimals}
+                        onChange={(qty) => {
+                            setOverStock(qty > max);
+                            onQty(qty);
+                        }}
+                        className="h-full w-full min-w-0 flex-1 rounded-md border-0 bg-transparent text-base font-extrabold focus:bg-white"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setOverStock(false);
+                            onInc();
+                        }}
+                        disabled={atMax}
+                        title={atMax ? 'No more stock available' : undefined}
+                        aria-label="Increase quantity"
+                        className={stepBtn}
+                    >
+                        <Plus className="size-4" />
+                    </button>
+                </div>
+
+                <label
+                    title="Discount"
+                    className="flex h-11 min-w-0 items-center gap-1 rounded-xl bg-canvas px-2.5 focus-within:ring-2 focus-within:ring-brand-400"
+                >
+                    <span className="shrink-0 text-xs font-semibold text-ink-muted">
+                        Disc.
+                    </span>
+                    <input
+                        inputMode="decimal"
+                        value={
+                            line.discountPct ? formatPct(line.discountPct) : ''
+                        }
+                        placeholder="0"
+                        onChange={(e) =>
+                            onDiscount(parseFloat(e.target.value) || 0)
+                        }
+                        aria-label={`Discount percent for ${line.name}`}
+                        className="w-full min-w-0 flex-1 bg-transparent text-right text-sm font-bold tabular-nums outline-none placeholder:text-ink-subtle"
+                    />
+                    <span className="shrink-0 text-sm font-bold text-ink-muted">
+                        %
+                    </span>
+                </label>
+
+                {/* Click to switch where the stock comes from. */}
+                <button
+                    type="button"
+                    onClick={() =>
+                        onSource(
+                            line.source === 'STORE' ? 'WAREHOUSE' : 'STORE',
+                        )
+                    }
+                    aria-label={`Stock from ${line.source === 'STORE' ? 'store' : 'warehouse'}. Click to switch.`}
+                    className={cn(
+                        'h-11 min-w-0 cursor-pointer truncate rounded-xl px-1 text-[13px] font-bold transition-colors active:scale-[0.97]',
+                        line.source === 'STORE'
+                            ? 'bg-success-text text-white'
+                            : 'bg-yellow-400 text-ink',
+                    )}
+                >
+                    {line.source === 'STORE' ? 'Store' : 'Warehouse'}
+                </button>
+            </div>
+            {overStock && (
+                <div
+                    role="status"
+                    className="text-xs font-semibold text-warning-text tabular-nums"
+                >
+                    Only {unitCount(max, line.unit, line.measured)} available,
+                    so the quantity was set to that.
+                </div>
+            )}
+        </div>
     );
 }
