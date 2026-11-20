@@ -1,0 +1,44 @@
+services:
+    # Matches the cPanel host (MariaDB 10.11).
+    mariadb:
+        image: mariadb:10.11
+        restart: unless-stopped
+        ports:
+            - '${FORWARD_DB_PORT:-3306}:3306'
+        environment:
+            MARIADB_DATABASE: '${DB_DATABASE}'
+            MARIADB_USER: '${DB_USERNAME}'
+            MARIADB_PASSWORD: '${DB_PASSWORD}'
+            MARIADB_ROOT_PASSWORD: '${DB_PASSWORD}'
+        command:
+            [
+                '--character-set-server=utf8mb4',
+                '--collation-server=utf8mb4_unicode_ci',
+            ]
+        volumes:
+            - mariadb-data:/var/lib/mysql
+            - ./docker/mariadb/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql:ro
+        healthcheck:
+            test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    # The old Postgres database, kept only to copy its data across:
+    #   docker compose --profile legacy up -d pgsql
+    pgsql:
+        image: postgres:17-alpine
+        profiles: [legacy]
+        restart: 'no'
+        ports:
+            - '${LEGACY_PG_PORT:-5432}:5432'
+        environment:
+            POSTGRES_DB: '${LEGACY_PG_DATABASE:-kulatissa}'
+            POSTGRES_USER: '${LEGACY_PG_USERNAME:-kulatissa}'
+            POSTGRES_PASSWORD: '${LEGACY_PG_PASSWORD}'
+        volumes:
+            - pgsql-data:/var/lib/postgresql/data
+
+volumes:
+    mariadb-data:
+    pgsql-data:
