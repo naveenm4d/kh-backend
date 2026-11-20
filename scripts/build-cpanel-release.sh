@@ -56,7 +56,16 @@ php artisan key:generate --force --quiet
 
 echo "==> npm build"
 npm ci --no-audit --no-fund --loglevel=error
+# Reuse the project's downloaded web fonts (Bunny Fonts) so a release doesn't depend on that CDN being
+# up, and keep anything newly downloaded for next time.
+font_cache="node_modules/.cache/laravel-vite-plugin/fonts"
+if [ -d "$root/$font_cache" ]; then
+    mkdir -p "$font_cache"
+    cp -R "$root/$font_cache/." "$font_cache/"
+fi
 npm run build
+mkdir -p "$root/$font_cache"
+cp -R "$font_cache/." "$root/$font_cache/" 2>/dev/null || true
 
 min_php="$(grep -o 'PHP_VERSION_ID >= [0-9]*' vendor/composer/platform_check.php | grep -o '[0-9]*$' || echo 0)"
 # PHP extensions required by the app and its production packages.
