@@ -10,8 +10,8 @@ import type { BadgeTone } from '@admin/shared/components/Badge';
 import type { OrderStatus, PaymentMethod } from '@admin/features/orders/types';
 
 export const statusTone: Record<OrderStatus, BadgeTone> = {
-    PENDING: 'warning',
-    ISSUED: 'brand',
+    READY_TO_COLLECT: 'brand',
+    PAYMENT_PENDING: 'warning',
     COMPLETED: 'success',
     CANCELLED: 'danger',
 };

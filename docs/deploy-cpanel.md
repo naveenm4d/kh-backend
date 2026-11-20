@@ -2,12 +2,12 @@
 
 How to run the backend on a shared cPanel account that has MariaDB, phpMyAdmin and Git Version Control but no SSH. Nothing is built on the server: you build on your own machine and cPanel pulls the result from a branch.
 
-| Where           | What                                                                       |
-| --------------- | -------------------------------------------------------------------------- |
-| Your machine    | Build the release (`vendor/`, `public/build/`), export the database dump   |
-| GitHub          | `cpanel-deploy` branch: built files only; source stays on your other branches |
-| cPanel          | Clone of `cpanel-deploy` in `~/public_html/subaora.com/repositories/kh-backend`, `.env` beside it |
-| Subdomain       | Document root: `public_html/subaora.com/repositories/kh-backend/public`                    |
+| Where        | What                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| Your machine | Build the release (`vendor/`, `public/build/`), export the database dump                          |
+| GitHub       | `cpanel-deploy` branch: built files only; source stays on your other branches                     |
+| cPanel       | Clone of `cpanel-deploy` in `~/public_html/subaora.com/repositories/kh-backend`, `.env` beside it |
+| Subdomain    | Document root: `public_html/subaora.com/repositories/kh-backend/public`                           |
 
 The examples use `api.example.lk`; use your own subdomain.
 
@@ -48,55 +48,56 @@ This exports `HEAD` and installs production Composer packages. It builds the fro
 2. **HTTPS.** SSL/TLS Status → run AutoSSL for the subdomain. Domains → turn on **Force HTTPS Redirect**. The tills refuse plain HTTP.
 3. **PHP.** MultiPHP Manager → set the subdomain to **PHP 8.4** (8.4.1 or newer). In Select PHP Version → Extensions (if your host has it), enable at least `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `dom`, `xml`, `ctype`, `fileinfo`, `iconv`, plus anything the build script listed.
 4. **Database.**
-   1. MySQL Databases → create a database (cPanel prefixes it, e.g. `cpuser_kulatissa`) and a user with a strong password. Add the user to the database with **ALL PRIVILEGES**.
-   2. phpMyAdmin → select the new, empty database → Import → choose `kulatissa-<date>.sql.gz` → Go. Leave the format as SQL.
-   3. If the file is over the upload limit shown there, ask your host to raise it or to import it for you.
+    1. MySQL Databases → create a database (cPanel prefixes it, e.g. `cpuser_kulatissa`) and a user with a strong password. Add the user to the database with **ALL PRIVILEGES**.
+    2. phpMyAdmin → select the new, empty database → Import → choose `kulatissa-<date>.sql.gz` → Go. Leave the format as SQL.
+    3. If the file is over the upload limit shown there, ask your host to raise it or to import it for you.
 5. **Code.** Git Version Control → Create:
-   - Clone URL: `https://github.com/naveenm4d/kh-backend.git`. For a private repo, use a GitHub fine-grained token with read-only *Contents* access on this one repo: `https://<token>@github.com/naveenm4d/kh-backend.git`. If your plan has SSH Access → Manage Keys, a read-only deploy key works too.
-   - Repository path: `public_html/subaora.com/repositories/kh-backend`.
-   - After it clones: Manage → Basic Information → **Checked-Out Branch: `cpanel-deploy`**.
+    - Clone URL: `https://github.com/naveenm4d/kh-backend.git`. For a private repo, use a GitHub fine-grained token with read-only _Contents_ access on this one repo: `https://<token>@github.com/naveenm4d/kh-backend.git`. If your plan has SSH Access → Manage Keys, a read-only deploy key works too.
+    - Repository path: `public_html/subaora.com/repositories/kh-backend`.
+    - After it clones: Manage → Basic Information → **Checked-Out Branch: `cpanel-deploy`**.
 6. **`.env`.** File Manager → `public_html/subaora.com/repositories/kh-backend` → create `.env` (turn on "Show Hidden Files"):
 
-   ```dotenv
-   APP_NAME="Kulatissa Hardware"
-   APP_ENV=production
-   APP_KEY=base64:...                    # the same key as the install the data came from
-   APP_DEBUG=false
-   APP_URL=https://api.example.lk
+    ```dotenv
+    APP_NAME="Kulatissa Hardware"
+    APP_ENV=production
+    APP_KEY=base64:...                    # the same key as the install the data came from
+    APP_DEBUG=false
+    APP_URL=https://api.example.lk
 
-   LOG_CHANNEL=stack
-   LOG_STACK=daily
-   LOG_LEVEL=warning
+    LOG_CHANNEL=stack
+    LOG_STACK=daily
+    LOG_LEVEL=warning
 
-   DB_CONNECTION=mariadb
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_DATABASE=cpuser_kulatissa
-   DB_USERNAME=cpuser_kulatissa
-   DB_PASSWORD=...
+    DB_CONNECTION=mariadb
+    DB_HOST=localhost
+    DB_PORT=3306
+    DB_DATABASE=cpuser_kulatissa
+    DB_USERNAME=cpuser_kulatissa
+    DB_PASSWORD=...
 
-   SESSION_DRIVER=database
-   SESSION_LIFETIME=120
-   SESSION_ENCRYPT=true
-   SESSION_SECURE_COOKIE=true
-   CACHE_STORE=database
-   QUEUE_CONNECTION=sync
-   FILESYSTEM_DISK=local
-   MAIL_MAILER=log
+    SESSION_DRIVER=database
+    SESSION_LIFETIME=120
+    SESSION_ENCRYPT=true
+    SESSION_SECURE_COOKIE=true
+    CACHE_STORE=database
+    QUEUE_CONNECTION=sync
+    FILESYSTEM_DISK=local
+    MAIL_MAILER=log
 
-   # Leave empty unless the site sits behind a proxy such as Cloudflare.
-   TRUSTED_PROXIES=
-   SANCTUM_EXPIRATION=720
-   ```
+    # Leave empty unless the site sits behind a proxy such as Cloudflare.
+    TRUSTED_PROXIES=
+    SANCTUM_EXPIRATION=720
+    ```
 
-   Set its permissions to `600`. It lives outside the document root, so the web can't reach it.
+    Set its permissions to `600`. It lives outside the document root, so the web can't reach it.
+
 7. **Writable folders.** `storage/` (and everything under it) and `bootstrap/cache/` need `755` on folders. That is cPanel's default, so usually there's nothing to do.
 8. **Deploy.** Git Version Control → Manage → Pull or Deploy → **Deploy HEAD Commit**. `.cpanel.yml` runs `scripts/cpanel-deploy.sh`, which:
-   - finds a PHP 8.4+ command-line binary (MultiPHP only sets the website's version, not the shell's);
-   - checks that `vendor/`, `public/build/` and `.env` are there;
-   - runs `artisan migrate --force` and `artisan optimize`.
+    - finds a PHP 8.4+ command-line binary (MultiPHP only sets the website's version, not the shell's);
+    - checks that `vendor/`, `public/build/` and `.env` are there;
+    - runs `artisan migrate --force` and `artisan optimize`.
 
-   Its output, errors included, is in the newest `~/.cpanel/logs/vc_*_git_deploy.log`. The last line should read `Deploy finished.` The script path in `.cpanel.yml` must match where the repository is cloned (currently `/home/subaorac/public_html/subaora.com/repositories/kh-backend`); change it on your source branch and rebuild if you move it.
+    Its output, errors included, is in the newest `~/.cpanel/logs/vc_*_git_deploy.log`. The last line should read `Deploy finished.` The script path in `.cpanel.yml` must match where the repository is cloned (currently `/home/subaorac/public_html/subaora.com/repositories/kh-backend`); change it on your source branch and rebuild if you move it.
 
 Check:
 
@@ -120,17 +121,17 @@ Some hosts don't run `.cpanel.yml` tasks on accounts without shell access. In th
 - **Don't leave a stale cache behind.** If a cache was built once and `.env` changes later, delete `bootstrap/cache/config.php` in File Manager.
 - **Schema changes go through phpMyAdmin.** On your machine, against the local MariaDB copy, run:
 
-  ```bash
-  php artisan migrate --pretend      # prints the SQL each pending migration would run
-  ```
+    ```bash
+    php artisan migrate --pretend      # prints the SQL each pending migration would run
+    ```
 
-  Paste that SQL into phpMyAdmin → SQL, then record each migration as run, with the next batch number:
+    Paste that SQL into phpMyAdmin → SQL, then record each migration as run, with the next batch number:
 
-  ```sql
-  INSERT INTO migrations (migration, batch) VALUES ('2026_12_01_000000_example', 2);
-  ```
+    ```sql
+    INSERT INTO migrations (migration, batch) VALUES ('2026_12_01_000000_example', 2);
+    ```
 
-  `--pretend` only shows SQL, not PHP logic such as data fixes in a migration. For a migration with such logic, run it locally against a copy of production, then export and import the affected tables instead.
+    `--pretend` only shows SQL, not PHP logic such as data fixes in a migration. For a migration with such logic, run it locally against a copy of production, then export and import the affected tables instead.
 
 ## Backups
 

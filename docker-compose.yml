@@ -10,7 +10,11 @@ services:
             MARIADB_USER: '${DB_USERNAME}'
             MARIADB_PASSWORD: '${DB_PASSWORD}'
             MARIADB_ROOT_PASSWORD: '${DB_PASSWORD}'
-        command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+        command:
+            [
+                '--character-set-server=utf8mb4',
+                '--collation-server=utf8mb4_unicode_ci',
+            ]
         volumes:
             - mariadb-data:/var/lib/mysql
             - ./docker/mariadb/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql:ro

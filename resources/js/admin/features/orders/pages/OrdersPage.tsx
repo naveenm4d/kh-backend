@@ -168,8 +168,11 @@ export function OrdersPage() {
                         onChange={resetPage(setStatus)}
                         options={[
                             { value: 'ALL', label: 'All' },
-                            { value: 'PENDING', label: 'Pending' },
-                            { value: 'ISSUED', label: 'Issued' },
+                            { value: 'READY_TO_COLLECT', label: 'To collect' },
+                            {
+                                value: 'PAYMENT_PENDING',
+                                label: 'Payment pending',
+                            },
                             { value: 'COMPLETED', label: 'Completed' },
                             { value: 'CANCELLED', label: 'Cancelled' },
                         ]}

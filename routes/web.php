@@ -80,6 +80,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
         Route::put('orders/{order}/items', [OrderController::class, 'updateItems']);
         Route::post('orders/{order}/issue', [OrderController::class, 'issue']);
+        Route::post('orders/{order}/settle', [OrderController::class, 'settle']);
         Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
 
         Route::middleware('can:page.users')->group(function () {

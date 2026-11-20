@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\Orders\CancelOrder;
 use App\Actions\Orders\CreateOrder;
 use App\Actions\Orders\IssueOrder;
+use App\Actions\Orders\SettleOrder;
 use App\Actions\Orders\UpdateOrderItems;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
@@ -72,6 +73,11 @@ class OrderController extends Controller
     public function issue(Request $request, Order $order, IssueOrder $issue): OrderResource
     {
         return OrderResource::make($issue($request->user(), $order));
+    }
+
+    public function settle(Request $request, Order $order, SettleOrder $settle): OrderResource
+    {
+        return OrderResource::make($settle($request->user(), $order));
     }
 
     public function cancel(Request $request, Order $order, CancelOrder $cancel): OrderResource

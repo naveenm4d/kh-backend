@@ -24,6 +24,7 @@ enum Permission: string
 
     case OrdersEdit = 'orders.edit';
     case OrdersCancel = 'orders.cancel';
+    case OrdersSettle = 'orders.settle';
 
     case CustomersPayment = 'customers.payment';
     case StockAdjust = 'stock.adjust';
@@ -56,6 +57,7 @@ enum Permission: string
             self::PosCredit => 'Sell on credit',
             self::OrdersEdit => 'Edit bill items',
             self::OrdersCancel => 'Cancel bills',
+            self::OrdersSettle => 'Mark credit bills as paid',
             self::CustomersPayment => 'Record customer payments',
             self::StockAdjust => 'Change stock',
             self::PricesEdit => 'Change prices',
@@ -69,7 +71,7 @@ enum Permission: string
             self::PageDashboard => "Today's sales, credit to collect and stock running low.",
             self::PageReports => 'Compare sales across any two periods.',
             self::PageCustomers => 'Customer list, balances and history.',
-            self::PageOrders => 'Find, print and issue bills.',
+            self::PageOrders => 'Find, print and mark bills as collected.',
             self::PageInventory => 'Products and stock levels.',
             self::PageCatalog => 'Brands, categories and suppliers.',
             self::PageUsers => 'Staff accounts, passwords and these permissions.',
@@ -79,6 +81,7 @@ enum Permission: string
             self::PosCredit => "Add a bill to a customer's balance.",
             self::OrdersEdit => "Change the items on a bill after it's rung up.",
             self::OrdersCancel => 'Cancel a bill, returning stock and reversing credit.',
+            self::OrdersSettle => 'Close a credit bill once the customer has settled it.',
             self::CustomersPayment => 'Take payments against credit, or change a balance by hand.',
             self::StockAdjust => 'Add received stock, or correct a count in the product details.',
             self::PricesEdit => 'Edit selling and marked prices.',

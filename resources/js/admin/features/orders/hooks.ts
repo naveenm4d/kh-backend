@@ -73,6 +73,20 @@ export function useIssueOrder() {
     });
 }
 
+export function useSettleOrder() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (invoice: string) => ordersApi.settle(invoice),
+        onSuccess: (order) => {
+            void queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+            void queryClient.invalidateQueries({
+                queryKey: orderKeys.detail(order.invoice),
+            });
+            void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        },
+    });
+}
+
 export function useUpdateOrderItems() {
     const queryClient = useQueryClient();
     return useMutation({

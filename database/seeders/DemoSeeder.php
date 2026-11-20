@@ -6,7 +6,9 @@ use App\Actions\Customers\RecordPayment;
 use App\Actions\Orders\CancelOrder;
 use App\Actions\Orders\CreateOrder;
 use App\Actions\Orders\IssueOrder;
+use App\Actions\Orders\SettleOrder;
 use App\Enums\ItemSource;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\StockMovementReason;
 use App\Models\Brand;
@@ -37,7 +39,7 @@ class DemoSeeder extends Seeder
 {
     private const DAYS = 120;
 
-    public function run(CreateOrder $createOrder, CancelOrder $cancelOrder, IssueOrder $issueOrder, RecordPayment $recordPayment): void
+    public function run(CreateOrder $createOrder, CancelOrder $cancelOrder, IssueOrder $issueOrder, SettleOrder $settleOrder, RecordPayment $recordPayment): void
     {
         if (app()->isProduction()) {
             throw new RuntimeException('DemoSeeder is for local development only.');
@@ -130,8 +132,9 @@ class DemoSeeder extends Seeder
 
             $order = $createOrder($cashier, $lines, $sale['payment'], $customer?->id);
 
-            if ($sale['payment'] === PaymentMethod::Credit && mt_rand(1, 100) <= 60) {
-                $issueOrder($cashier, $order);
+            // Most warehouse goods have been collected; recent ones are still waiting.
+            if ($order->status === OrderStatus::ReadyToCollect && ($n < count($plan) - 10 || mt_rand(1, 100) <= 50)) {
+                $order = $issueOrder($cashier, $order);
             }
             if (mt_rand(1, 100) <= 2) {
                 $cancelOrder($admin, $order);
@@ -140,6 +143,9 @@ class DemoSeeder extends Seeder
                 $owed = (float) $customer->refresh()->credit;
                 if ($owed > 0) {
                     $recordPayment($admin, $customer, round($owed * mt_rand(30, 100) / 100), PaymentMethod::Cash, 'Part payment');
+                }
+                if ($order->status === OrderStatus::PaymentPending) {
+                    $settleOrder($admin, $order);
                 }
             }
         }

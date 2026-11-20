@@ -24,7 +24,7 @@ A point-of-sale and back-office app for Kulatissa Hardware, a single hardware st
 - Currency is Sri Lankan rupees, shown as `Rs. 12,345` with no decimals.
 - Customers can buy on credit. Outstanding credit is a real cash-flow concern that the owner follows up personally.
 - Products belong to category **groups** (each with an assigned colour in the frontends' `features/products/constants.ts`) and have stock counts. Low-stock and very-low levels are configurable in Settings (defaults: low at 20 or fewer, very low at 5 or fewer).
-- Orders have statuses PENDING / ISSUED / COMPLETED / CANCELLED. Cancelled orders are excluded from every sales figure.
+- Orders have statuses READY_TO_COLLECT (warehouse goods waiting) / PAYMENT_PENDING (credit, collected, unpaid) / COMPLETED / CANCELLED. Staff mark goods collected and, with `orders.settle`, credit bills paid. Cancelled orders are excluded from every sales figure.
 - Receipts print on thermal printers (ESC/POS).
 
 ## Capabilities and Constraints
