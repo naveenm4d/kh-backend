@@ -15,8 +15,8 @@ import type {
 export const PAYMENT_LABEL: Record<PaymentMethod, string> = paymentLabel;
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
-    PENDING: 'Pending',
-    ISSUED: 'Issued',
+    READY_TO_COLLECT: 'Ready for collection',
+    PAYMENT_PENDING: 'Payment pending',
     COMPLETED: 'Completed',
     CANCELLED: 'Cancelled',
 };

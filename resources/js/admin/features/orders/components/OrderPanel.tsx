@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from '@admin/shared/lib/router';
-import { Ban, PackageCheck, Pencil, Printer } from 'lucide-react';
+import { Ban, CircleCheck, PackageCheck, Pencil, Printer } from 'lucide-react';
 import { Badge } from '@admin/shared/components/Badge';
 import { Card } from '@admin/shared/components/Card';
 import { CompactButton } from '@admin/shared/components/controls';
@@ -23,7 +23,7 @@ import {
 import { useOrderActions } from '@admin/features/orders/useOrderActions';
 import { lineQty } from '@admin/shared/utils/units';
 
-/** Admin order panel: facts, line items and totals, with print / issue / edit / cancel. */
+/** Admin order panel: facts, line items and totals, with print / collect / settle / edit / cancel. */
 export function OrderPanel({
     invoice,
     onClose,
@@ -37,13 +37,17 @@ export function OrderPanel({
     const [editing, setEditing] = useState(false);
     const {
         canIssue,
+        canSettle,
+        canPrint,
         canEdit,
         canCancel,
         print,
         issue,
+        settle,
         cancel,
         isPrinting,
         isIssuing,
+        isSettling,
         isCancelling,
     } = useOrderActions(order);
 
@@ -87,27 +91,44 @@ export function OrderPanel({
                                 onClick={issue}
                                 busy={isIssuing}
                             >
-                                <PackageCheck /> Mark as issued
+                                <PackageCheck /> Mark as collected
                             </CompactButton>
                         )}
-                        {/* With "Mark as issued" present, print and edit shrink to icon buttons so the row doesn't wrap. */}
-                        <CompactButton
-                            onClick={print}
-                            busy={isPrinting}
-                            aria-label="Print bill"
-                            title="Print bill"
-                            className={canIssue ? 'px-2' : undefined}
-                        >
-                            <Printer /> {!canIssue && 'Print bill'}
-                        </CompactButton>
+                        {canSettle && (
+                            <CompactButton
+                                variant="primary"
+                                onClick={settle}
+                                busy={isSettling}
+                            >
+                                <CircleCheck /> Mark as paid
+                            </CompactButton>
+                        )}
+                        {/* With a primary status action present, print and edit shrink to icon buttons so the row doesn't wrap. */}
+                        {canPrint && (
+                            <CompactButton
+                                onClick={print}
+                                busy={isPrinting}
+                                aria-label="Print bill"
+                                title="Print bill"
+                                className={
+                                    canIssue || canSettle ? 'px-2' : undefined
+                                }
+                            >
+                                <Printer />{' '}
+                                {!canIssue && !canSettle && 'Print bill'}
+                            </CompactButton>
+                        )}
                         {canEdit && (
                             <CompactButton
                                 onClick={() => setEditing(true)}
                                 aria-label="Edit items"
                                 title="Edit items"
-                                className={canIssue ? 'px-2' : undefined}
+                                className={
+                                    canIssue || canSettle ? 'px-2' : undefined
+                                }
                             >
-                                <Pencil /> {!canIssue && 'Edit items'}
+                                <Pencil />{' '}
+                                {!canIssue && !canSettle && 'Edit items'}
                             </CompactButton>
                         )}
                     </>
@@ -119,12 +140,14 @@ export function OrderPanel({
                         credit it added was reversed.
                     </div>
                 )}
-                {order.payment === 'CREDIT' && order.status === 'PENDING' && (
-                    <div className="mx-5 mt-4 rounded-lg bg-warning-bg px-3 py-2 text-[13px] text-warning-text">
-                        On credit: {formatCurrency(order.amount)} was added to{' '}
-                        {order.customer}'s balance.
-                    </div>
-                )}
+                {order.payment === 'CREDIT' &&
+                    (order.status === 'READY_TO_COLLECT' ||
+                        order.status === 'PAYMENT_PENDING') && (
+                        <div className="mx-5 mt-4 rounded-lg bg-warning-bg px-3 py-2 text-[13px] text-warning-text">
+                            On credit: {formatCurrency(order.amount)} was added
+                            to {order.customer}'s balance.
+                        </div>
+                    )}
 
                 <PanelSection>
                     <PanelFacts

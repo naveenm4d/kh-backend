@@ -1,0 +1,86 @@
+name: cpanel-pipeline
+
+# Tests a source branch and builds it onto that environment's deploy branch. Deploying is done by
+# hand in cPanel (Git Version Control > Manage > Pull or Deploy > Update from Remote, then Deploy
+# HEAD Commit). Called by build-testing.yml (push to dev) and build-production.yml (manual, main).
+#
+# Per-environment variables live in GitHub > Settings > Environments (`testing`, `production`):
+#   DEPLOY_BRANCH  deploy branch the server clone checks out (cpanel-deploy-dev / cpanel-deploy)
+#   APP_PATH       server path of that clone, e.g. /home/subaorac/public_html/subaora.com/repositories/kh-backend
+# See docs/deploy-cpanel.md.
+
+on:
+    workflow_call:
+        inputs:
+            environment:
+                description: testing or production
+                type: string
+                required: true
+            ref:
+                description: Source branch to ship
+                type: string
+                required: true
+
+permissions:
+    contents: read
+
+jobs:
+    tests:
+        uses: ./.github/workflows/tests.yml
+        with:
+            ref: ${{ inputs.ref }}
+
+    build:
+        needs: tests
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        permissions:
+            contents: write # pushes the deploy branch
+        env:
+            TARGET_BRANCH: ${{ vars.DEPLOY_BRANCH }}
+            APP_PATH: ${{ vars.APP_PATH }}
+        steps:
+            - name: Check environment settings
+              run: |
+                  missing=""
+                  [ -n "$TARGET_BRANCH" ] || missing="$missing DEPLOY_BRANCH"
+                  [ -n "$APP_PATH" ] || missing="$missing APP_PATH"
+                  if [ -n "$missing" ]; then
+                      echo "::error::Set these variables on the '${{ inputs.environment }}' environment:$missing"
+                      exit 1
+                  fi
+                  case "$TARGET_BRANCH" in
+                      main|dev|release-*) echo "::error::DEPLOY_BRANCH must be a deploy-only branch, not $TARGET_BRANCH"; exit 1 ;;
+                  esac
+
+            - name: Checkout ${{ inputs.ref }}
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ inputs.ref }}
+                  persist-credentials: true # the build script pushes with this token
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+              with:
+                  php-version: '8.4'
+                  tools: composer:v2
+                  coverage: none
+
+            - name: Setup Node
+              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version: '22'
+
+            - name: Build and push ${{ vars.DEPLOY_BRANCH }}
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  scripts/build-cpanel-release.sh --push
+
+            - name: Next step
+              run: |
+                  {
+                      echo "### $TARGET_BRANCH is ready"
+                      echo
+                      echo "Built from \`${{ inputs.ref }}\` @ \`$(git rev-parse --short HEAD)\`. To deploy it: cPanel → Git Version Control → the clone at \`$APP_PATH\` → Manage → Pull or Deploy → **Update from Remote**, then **Deploy HEAD Commit**."
+                  } >> "$GITHUB_STEP_SUMMARY"

@@ -16,6 +16,8 @@ export const ordersApi = {
         http.post(`${path(invoice)}/cancel`),
     issue: (invoice: string): Promise<Order> =>
         http.post(`${path(invoice)}/issue`),
+    settle: (invoice: string): Promise<Order> =>
+        http.post(`${path(invoice)}/settle`),
     updateItems: (
         invoice: string,
         items: CreateOrderItemInput[],

@@ -18,6 +18,7 @@ return array(
     'App\\Actions\\Orders\\CreateOrder' => $baseDir . '/app/Actions/Orders/CreateOrder.php',
     'App\\Actions\\Orders\\IssueOrder' => $baseDir . '/app/Actions/Orders/IssueOrder.php',
     'App\\Actions\\Orders\\PriceLines' => $baseDir . '/app/Actions/Orders/PriceLines.php',
+    'App\\Actions\\Orders\\SettleOrder' => $baseDir . '/app/Actions/Orders/SettleOrder.php',
     'App\\Actions\\Orders\\UpdateOrderItems' => $baseDir . '/app/Actions/Orders/UpdateOrderItems.php',
     'App\\Actions\\Products\\DeleteProduct' => $baseDir . '/app/Actions/Products/DeleteProduct.php',
     'App\\Actions\\Products\\ReceiveStock' => $baseDir . '/app/Actions/Products/ReceiveStock.php',

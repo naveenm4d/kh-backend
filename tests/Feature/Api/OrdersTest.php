@@ -17,7 +17,7 @@ it('rings up a cash sale, taking stock and recording the ledger', function () {
         'cashReceived' => 10000,
     ])->assertCreated();
 
-    $response->assertJsonPath('status', 'COMPLETED')
+    $response->assertJsonPath('status', 'READY_TO_COLLECT')
         ->assertJsonPath('amount', 8250)
         ->assertJsonPath('cashier', $cashier->name)
         ->assertJsonPath('cashierCode', $cashier->code)
@@ -119,7 +119,7 @@ it('adds credit sales to the customer balance and needs a customer and the credi
 
     $pos->postJson('/api/v1/orders', ['items' => [$this->line($cement)], 'payment' => 'CREDIT', 'customerId' => $customer->id])
         ->assertCreated()
-        ->assertJsonPath('status', 'PENDING')
+        ->assertJsonPath('status', 'PAYMENT_PENDING')
         ->assertJsonPath('customerId', (string) $customer->id);
     expect((float) $customer->refresh()->credit)->toBe(3750.0);
 
@@ -172,16 +172,82 @@ it('needs the cancel permission to cancel', function () {
     $this->pos($cashier)->postJson("/api/v1/orders/$invoice/cancel")->assertForbidden();
 });
 
-it('marks only pending bills as issued', function () {
-    $cashier = $this->cashier();
+it('starts bills without warehouse lines as completed, or payment pending on credit', function () {
+    $cement = $this->product();
+    $pos = $this->pos($this->cashier());
+
+    $pos->postJson('/api/v1/orders', ['items' => [$this->line($cement)], 'payment' => 'CARD'])
+        ->assertJsonPath('status', 'COMPLETED');
+    $pos->postJson('/api/v1/orders', ['items' => [$this->line($cement)], 'payment' => 'CREDIT', 'customerId' => $this->customer()->id])
+        ->assertJsonPath('status', 'PAYMENT_PENDING');
+});
+
+it('keeps bills with warehouse lines ready to collect until collected', function (string $payment, string $after) {
+    $cement = $this->product();
+    $tile = $this->product(['name' => 'Tile', 'price' => 500]);
+    $pos = $this->pos($this->cashier());
+
+    $invoice = $pos->postJson('/api/v1/orders', [
+        'items' => [$this->line($tile), $this->line($cement, 1, ['source' => 'WAREHOUSE'])],
+        'payment' => $payment,
+        'customerId' => $this->customer()->id,
+    ])->assertJsonPath('status', 'READY_TO_COLLECT')->json('invoice');
+
+    $pos->postJson("/api/v1/orders/$invoice/issue")->assertOk()->assertJsonPath('status', $after);
+    $this->assertMessage($pos->postJson("/api/v1/orders/$invoice/issue")->assertUnprocessable(), 'Only bills waiting for collection');
+})->with([['CASH', 'COMPLETED'], ['CREDIT', 'PAYMENT_PENDING']]);
+
+it('only marks bills waiting at the warehouse as collected', function () {
+    $pos = $this->pos($this->cashier());
+    $cash = $pos->postJson('/api/v1/orders', ['items' => [$this->line($this->product())], 'payment' => 'CASH'])->json('invoice');
+
+    $pos->postJson("/api/v1/orders/$cash/issue")->assertUnprocessable();
+});
+
+it('marks payment pending bills as paid with the settle permission, leaving the balance alone', function () {
     $cement = $this->product();
     $customer = $this->customer();
-    $pos = $this->pos($cashier);
-    $credit = $pos->postJson('/api/v1/orders', ['items' => [$this->line($cement)], 'payment' => 'CREDIT', 'customerId' => $customer->id])->json('invoice');
-    $cash = $pos->postJson('/api/v1/orders', ['items' => [$this->line($cement)], 'payment' => 'CASH'])->json('invoice');
+    $invoice = $this->pos($this->cashier())->postJson('/api/v1/orders', [
+        'items' => [$this->line($cement)], 'payment' => 'CREDIT', 'customerId' => $customer->id,
+    ])->json('invoice');
 
-    $pos->postJson("/api/v1/orders/$credit/issue")->assertOk()->assertJsonPath('status', 'ISSUED');
-    $pos->postJson("/api/v1/orders/$cash/issue")->assertUnprocessable();
+    $this->pos($this->cashier())->postJson("/api/v1/orders/$invoice/settle")->assertForbidden();
+
+    $settler = $this->pos($this->staffWith([Permission::PosAccess, Permission::OrdersSettle]));
+    $settler->postJson("/api/v1/orders/$invoice/settle")->assertOk()->assertJsonPath('status', 'COMPLETED');
+    expect((float) $customer->refresh()->credit)->toBe(2750.0);
+
+    $this->assertMessage($settler->postJson("/api/v1/orders/$invoice/settle")->assertUnprocessable(), 'Only bills waiting for payment');
+});
+
+it('settles from the admin console too', function () {
+    $invoice = $this->pos($this->cashier())->postJson('/api/v1/orders', [
+        'items' => [$this->line($this->product())], 'payment' => 'CREDIT', 'customerId' => $this->customer()->id,
+    ])->json('invoice');
+
+    $this->actingAs($this->staffWith([Permission::PageOrders]))->postJson("/admin/api/orders/$invoice/settle")->assertForbidden();
+    $this->actingAs($this->staffWith([Permission::PageOrders, Permission::OrdersSettle]))
+        ->postJson("/admin/api/orders/$invoice/settle")->assertOk()->assertJsonPath('status', 'COMPLETED');
+});
+
+it('recomputes the status when an edit changes the warehouse lines', function () {
+    $cement = $this->product(['stock' => 20]);
+    $tile = $this->product(['name' => 'Tile', 'price' => 500, 'stock' => 20]);
+    $pos = $this->pos($this->staffWith([Permission::PosAccess, Permission::OrdersEdit]));
+    $warehouse = fn (int $qty) => $this->line($cement, $qty, ['source' => 'WAREHOUSE']);
+
+    $invoice = $pos->postJson('/api/v1/orders', ['items' => [$warehouse(2)], 'payment' => 'CASH'])->json('invoice');
+
+    // Nothing left to collect: the bill moves on.
+    $pos->putJson("/api/v1/orders/$invoice/items", ['items' => [$this->line($tile)]])->assertJsonPath('status', 'COMPLETED');
+    // Editing store lines on a finished bill keeps it finished.
+    $pos->putJson("/api/v1/orders/$invoice/items", ['items' => [$this->line($tile, 2)]])->assertJsonPath('status', 'COMPLETED');
+    // New warehouse goods have to be collected again.
+    $pos->putJson("/api/v1/orders/$invoice/items", ['items' => [$this->line($tile, 2), $warehouse(1)]])->assertJsonPath('status', 'READY_TO_COLLECT');
+    $pos->postJson("/api/v1/orders/$invoice/issue")->assertJsonPath('status', 'COMPLETED');
+    // Lowering a collected warehouse quantity doesn't reopen it; raising it does.
+    $pos->putJson("/api/v1/orders/$invoice/items", ['items' => [$warehouse(1)]])->assertJsonPath('status', 'COMPLETED');
+    $pos->putJson("/api/v1/orders/$invoice/items", ['items' => [$warehouse(3)]])->assertJsonPath('status', 'READY_TO_COLLECT');
 });
 
 it('edits bill items like cancel-then-recreate, keeping the original price allowed', function () {

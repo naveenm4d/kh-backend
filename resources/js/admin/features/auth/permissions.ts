@@ -13,6 +13,7 @@ export type Permission =
     | 'pos.credit'
     | 'orders.edit'
     | 'orders.cancel'
+    | 'orders.settle'
     | 'customers.payment'
     | 'stock.adjust'
     | 'prices.edit'

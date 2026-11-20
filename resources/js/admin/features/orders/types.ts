@@ -4,7 +4,11 @@ export type PaymentMethod =
     | 'BANK TRANSFER'
     | 'CHEQUE'
     | 'CREDIT';
-export type OrderStatus = 'PENDING' | 'ISSUED' | 'COMPLETED' | 'CANCELLED';
+export type OrderStatus =
+    | 'READY_TO_COLLECT'
+    | 'PAYMENT_PENDING'
+    | 'COMPLETED'
+    | 'CANCELLED';
 
 export type ItemSource = 'STORE' | 'WAREHOUSE';
 

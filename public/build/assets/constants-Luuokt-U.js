@@ -1,0 +1,1 @@
+var e={READY_TO_COLLECT:`brand`,PAYMENT_PENDING:`warning`,COMPLETED:`success`,CANCELLED:`danger`},t={CASH:`Cash`,CARD:`Card`,"BANK TRANSFER":`Bank transfer`,CHEQUE:`Cheque`,CREDIT:`Credit`};export{e as n,t};

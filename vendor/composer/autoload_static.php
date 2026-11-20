@@ -616,6 +616,7 @@ class ComposerStaticInit2ae50a6e2e7e520fe204c25a8ac3d3fd
         'App\\Actions\\Orders\\CreateOrder' => __DIR__ . '/../..' . '/app/Actions/Orders/CreateOrder.php',
         'App\\Actions\\Orders\\IssueOrder' => __DIR__ . '/../..' . '/app/Actions/Orders/IssueOrder.php',
         'App\\Actions\\Orders\\PriceLines' => __DIR__ . '/../..' . '/app/Actions/Orders/PriceLines.php',
+        'App\\Actions\\Orders\\SettleOrder' => __DIR__ . '/../..' . '/app/Actions/Orders/SettleOrder.php',
         'App\\Actions\\Orders\\UpdateOrderItems' => __DIR__ . '/../..' . '/app/Actions/Orders/UpdateOrderItems.php',
         'App\\Actions\\Products\\DeleteProduct' => __DIR__ . '/../..' . '/app/Actions/Products/DeleteProduct.php',
         'App\\Actions\\Products\\ReceiveStock' => __DIR__ . '/../..' . '/app/Actions/Products/ReceiveStock.php',

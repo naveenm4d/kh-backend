@@ -76,7 +76,7 @@ final class CreateOrder
                     'cashier_code' => $cashier->code,
                     'terminal_id' => $terminal?->id,
                     'payment' => $payment,
-                    'status' => $payment === PaymentMethod::Credit ? OrderStatus::Pending : OrderStatus::Completed,
+                    'status' => OrderStatus::initial($payment, in_array(ItemSource::Warehouse, array_column($priced['lines'], 'source'), true)),
                     'amount' => $amount,
                     'cash_received' => $payment === PaymentMethod::Cash && $cashReceived !== null ? Money::fromCents(Money::toCents($cashReceived)) : null,
                     'sold_on' => now()->toDateString(),

@@ -47,6 +47,7 @@ Route::prefix('v1')->middleware('terminal')->group(function () {
         Route::get('orders/{order}', [OrderController::class, 'show']);
         Route::put('orders/{order}/items', [OrderController::class, 'updateItems']);
         Route::post('orders/{order}/issue', [OrderController::class, 'issue']);
+        Route::post('orders/{order}/settle', [OrderController::class, 'settle']);
         Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
     });
 });
