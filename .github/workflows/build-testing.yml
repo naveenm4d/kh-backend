@@ -1,0 +1,23 @@
+name: Build testing
+
+# Every push to dev is tested and built onto the testing deploy branch (cpanel-deploy-dev).
+# Deploy it from cPanel by hand: Update from Remote, then Deploy HEAD Commit.
+on:
+    push:
+        branches: [dev]
+    workflow_dispatch:
+
+# Builds of the same environment run one after another, so deploy-branch pushes never race.
+concurrency:
+    group: build-testing
+    cancel-in-progress: false
+
+permissions:
+    contents: write
+
+jobs:
+    build:
+        uses: ./.github/workflows/cpanel-pipeline.yml
+        with:
+            environment: testing
+            ref: dev
