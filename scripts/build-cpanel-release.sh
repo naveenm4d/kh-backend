@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Builds a deployable copy of the current commit for cPanel, where composer and npm can't run:
 # production vendor/ and public/build/ are committed onto a deploy branch, which cPanel's Git Version
-# Control pulls. Source branches never carry built files. The GitHub workflows
-# (.github/workflows/build-*.yml) run this; it also works by hand.
+# Control pulls. Source branches never carry built files.
 #
-#   scripts/build-cpanel-release.sh           # build and commit locally
-#   scripts/build-cpanel-release.sh --push    # ...and push the branch to origin
+#   composer release                          # build HEAD onto cpanel-deploy and push it
+#   composer release:testing                  # ...onto cpanel-deploy-dev
+#   scripts/build-cpanel-release.sh           # build and commit locally, no push
 #
 # Env:
 #   TARGET_BRANCH  deploy branch to commit to (default cpanel-deploy; testing uses cpanel-deploy-dev)
