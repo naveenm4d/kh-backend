@@ -2,12 +2,12 @@
 
 How to run the backend on a shared cPanel account that has MariaDB, phpMyAdmin and Git Version Control but no SSH. Nothing is built on the server. You build each release on your machine onto a deploy branch (`composer release`), and cPanel pulls and deploys it.
 
-| Command                    | Deploy branch       | For                                      |
-| -------------------------- | ------------------- | ---------------------------------------- |
-| `composer release`         | `cpanel-deploy`     | production (the clone cPanel runs today) |
-| `composer release:testing` | `cpanel-deploy-dev` | a testing clone, if you set one up       |
+| Command                    | Deploy branch       | For        | cPanel clone                                                                               |
+| -------------------------- | ------------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| `composer release`         | `cpanel-deploy`     | production | `/home/subaorac/public_html/kulatissahardware.com.lk/repositories`                         |
+| `composer release:testing` | `cpanel-deploy-dev` | testing    | `/home/subaorac/public_html/subaora.com/repositories/kh-backend` (https://pos.subaora.com) |
 
-Each cPanel clone checks out one deploy branch and has its own `.env`. Today there's one clone, `/home/subaorac/public_html/subaora.com/repositories/kh-backend`, serving https://pos.subaora.com. Deploy branches hold built files only (`vendor/`, `public/build/`).
+Each cPanel clone checks out one deploy branch and has its own `.env`. Deploy branches hold built files only (`vendor/`, `public/build/`).
 
 The examples use `api.example.lk`; use your own subdomain.
 
@@ -50,7 +50,7 @@ Both run `scripts/build-cpanel-release.sh --push`, which:
 
 At the end it prints the PHP version and extensions the server needs. Then deploy it in cPanel (section 4).
 
-The server path defaults to `/home/subaorac/public_html/subaora.com/repositories/kh-backend`. For a clone somewhere else (for example a future production clone), set it for that run:
+The server path defaults to the clone in the table above for that branch. For a clone somewhere else, set it for that run:
 
 ```bash
 APP_PATH=/home/subaorac/.../kh-backend composer release
