@@ -42,3 +42,6 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+
+# cPanel writes this into an FTP account's home folder; the production clone is one.
+/.ftpquota
