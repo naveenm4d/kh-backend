@@ -31,6 +31,8 @@ export interface OrderLineItem {
 export interface Order {
     invoice: string;
     date: string;
+    /** When it was rung up (ISO 8601); printed as the bill's time. */
+    createdAt: string | null;
     customerId: string | null;
     customer: string;
     payment: PaymentMethod;
