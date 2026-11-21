@@ -35,8 +35,20 @@ export function orderTotals(order: Order): {
     return { subtotal, discount: subtotal - order.amount };
 }
 
+/** Bills always show Sri Lankan time, whatever the computer's own time zone. */
+const SRI_LANKA_TIME = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Colombo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+});
+
 /**
- * "2026-11-21 21:00:00": when the bill was rung up, printed in one Date row. Bills without a
+ * "2026-11-21 21:00:00": when the bill was rung up, in Sri Lankan time, printed in one Date row. Bills without a
  * timestamp fall back to their date alone.
  */
 export function billDateTime(
@@ -45,8 +57,10 @@ export function billDateTime(
 ): string {
     const d = createdAt ? new Date(createdAt) : null;
     if (!d || Number.isNaN(d.getTime())) return fallbackDate;
-    const p = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    const part = Object.fromEntries(
+        SRI_LANKA_TIME.formatToParts(d).map((x) => [x.type, x.value]),
+    );
+    return `${part.year}-${part.month}-${part.day} ${part.hour}:${part.minute}:${part.second}`;
 }
 
 /** Reprints only have the persisted Order — subtotal/discount and cash tendered weren't stored, so they're derived from the final line totals, and Paid/Change assume full settlement. */
