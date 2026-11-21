@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TerminalResource;
 use App\Models\Terminal;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -35,6 +37,7 @@ class TerminalController extends Controller
         );
 
         [$terminal, $key] = Terminal::register(trim($data['name']));
+        Activity::record($request->user(), ActivityAction::TerminalRegistered, $terminal, $terminal->name, "Registered till {$terminal->name}");
 
         return response()->json([...TerminalResource::make($terminal)->resolve($request), 'key' => $key], 201);
     }
@@ -44,6 +47,7 @@ class TerminalController extends Controller
     {
         Abilities::ensure($request->user(), Permission::PageSettings);
         $terminal->delete();
+        Activity::record($request->user(), ActivityAction::TerminalRevoked, $terminal, $terminal->name, "Removed till {$terminal->name}");
 
         return response()->noContent();
     }

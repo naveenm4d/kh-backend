@@ -2,12 +2,14 @@
 
 namespace App\Actions\Customers;
 
+use App\Enums\ActivityAction;
 use App\Enums\PaymentMethod;
 use App\Enums\Permission;
 use App\Models\Customer;
 use App\Models\CustomerPayment;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -52,7 +54,10 @@ final class RecordPayment
             ]);
 
             $customer->credit = Money::fromCents($owedCents - $amountCents);
+            $changes = Activity::changesOf($customer, ['credit' => 'Balance']);
             $customer->save();
+            Activity::record($user, ActivityAction::CustomerPayment, $customer, $customer->name,
+                sprintf('Recorded a %s payment of %s from %s', mb_strtolower($method->label()), Money::format($payment->amount), $customer->name), $changes);
 
             return $payment;
         });

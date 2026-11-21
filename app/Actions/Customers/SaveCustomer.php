@@ -2,11 +2,14 @@
 
 namespace App\Actions\Customers;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Models\Customer;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use App\Support\Money;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Creates or updates a customer. Cashiers can add customers from the till; setting or changing a
@@ -28,13 +31,23 @@ final class SaveCustomer
         }
 
         $customer ??= new Customer;
+        $isNew = ! $customer->exists;
         $customer->fill([
             'name' => trim($data['name']),
             'phone' => trim((string) ($data['phone'] ?? '')),
             'address' => trim((string) ($data['address'] ?? '')),
             'credit' => Money::fromCents($creditCents),
-        ])->save();
+        ]);
+        $changes = Activity::changesOf($customer, ['credit' => 'Balance']);
 
-        return $customer;
+        return DB::transaction(function () use ($user, $customer, $isNew, $changes) {
+            $customer->save();
+            if ($isNew || $changes !== []) {
+                Activity::record($user, $isNew ? ActivityAction::CustomerCreated : ActivityAction::CustomerUpdated, $customer, $customer->name,
+                    $isNew ? 'Added customer '.$customer->name : Activity::changedSummary($customer->name, $changes), $changes);
+            }
+
+            return $customer;
+        });
     }
 }

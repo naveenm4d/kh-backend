@@ -2,10 +2,12 @@
 
 namespace App\Actions\Staff;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Validation\ValidationException;
 
 final class DeleteRole
@@ -27,5 +29,6 @@ final class DeleteRole
             ]);
         }
         $role->delete();
+        Activity::record($actor, ActivityAction::RoleDeleted, $role, $role->name, "Deleted role {$role->name}");
     }
 }

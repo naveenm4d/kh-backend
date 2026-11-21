@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\CatalogController;
 use App\Http\Controllers\Admin\InsightsController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -26,7 +27,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/', function (Request $request) {
         /** @var User $user */
         $user = $request->user();
-        foreach (['dashboard', 'reports', 'orders', 'customers', 'inventory', 'catalog', 'users', 'settings'] as $page) {
+        foreach (['dashboard', 'reports', 'orders', 'customers', 'inventory', 'catalog', 'users', 'settings', 'activity'] as $page) {
             if ($user->can("page.$page")) {
                 return redirect()->route("admin.$page");
             }
@@ -34,7 +35,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         abort(403);
     })->name('home');
 
-    foreach (['dashboard', 'reports', 'orders', 'customers', 'inventory', 'catalog', 'users', 'settings'] as $page) {
+    foreach (['dashboard', 'reports', 'orders', 'customers', 'inventory', 'catalog', 'users', 'settings', 'activity'] as $page) {
         Route::inertia($page, "admin/$page")->middleware("can:page.$page")->name($page);
     }
     Route::inertia('terminals', 'admin/terminals')->middleware('can:page.settings')->name('terminals');
@@ -94,6 +95,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             Route::put('roles/{role}', [StaffController::class, 'updateRole'])->whereNumber('role');
             Route::delete('roles/{role}', [StaffController::class, 'destroyRole'])->whereNumber('role');
             Route::get('permissions', [StaffController::class, 'permissions']);
+        });
+
+        Route::middleware('can:page.activity')->group(function () {
+            Route::get('activity', [ActivityController::class, 'index']);
+            Route::get('activity/filters', [ActivityController::class, 'filters']);
         });
 
         Route::get('settings/shop', [SettingsController::class, 'shop']);

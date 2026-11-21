@@ -2,6 +2,7 @@
 
 namespace App\Actions\Catalog;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Models\Brand;
 use App\Models\Category;
@@ -10,6 +11,7 @@ use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -33,7 +35,7 @@ final class DeleteCatalogRecord
             }
         }
 
-        DB::transaction(function () use ($record) {
+        DB::transaction(function () use ($user, $record) {
             $column = match (true) {
                 $record instanceof Brand => 'brand_id',
                 $record instanceof Category => 'category_id',
@@ -43,6 +45,8 @@ final class DeleteCatalogRecord
                 Product::withTrashed()->where($column, $record->id)->update([$column => null, 'updated_at' => now()]);
             }
             $record->delete();
+            $kind = mb_strtolower(class_basename($record));
+            Activity::record($user, ActivityAction::CatalogDeleted, $record, $record->name, "Deleted $kind {$record->name}");
         });
     }
 }

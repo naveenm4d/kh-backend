@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
@@ -11,12 +12,14 @@ use App\Models\PersonalAccessToken;
 use App\Models\Terminal;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -44,14 +47,18 @@ class AuthController extends Controller
         $valid = Hash::check((string) $request->input('password'), $user->password ?? '$2y$12$'.str_repeat('x', 53));
         if ($user === null || ! $valid) {
             RateLimiter::hit($key, 60);
+            $typed = $user->email ?? Str::limit(trim((string) $request->input('email')), 120);
+            Activity::record(null, ActivityAction::SignInFailed, $user, $typed, "Failed till sign-in for $typed");
             throw ValidationException::withMessages(['password' => 'Invalid email or password.']);
         }
         RateLimiter::clear($key);
 
         if (! $user->active) {
+            Activity::record(null, ActivityAction::SignInFailed, $user, $user->email, "Refused till sign-in for {$user->email}: account deactivated");
             throw ValidationException::withMessages(['password' => 'This account has been deactivated. Ask an admin to reactivate it.']);
         }
         if (! $user->hasPermission(Permission::PosAccess)) {
+            Activity::record(null, ActivityAction::SignInFailed, $user, $user->email, "Refused till sign-in for {$user->email}: no cashier access");
             throw ValidationException::withMessages(['password' => "Your role can't use the cashier screen. Use the admin console instead."]);
         }
 
@@ -69,6 +76,8 @@ class AuthController extends Controller
             'expires_at' => $expiresAt,
             'terminal_id' => $terminal->id,
         ]);
+
+        Activity::record($user, ActivityAction::SignedIn, $user, $user->name, "Signed in on till {$terminal->name}");
 
         return response()->json([
             'token' => $token->id.'|'.$plain,
@@ -113,7 +122,11 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()?->currentAccessToken()?->delete();
+        $user = $request->user();
+        if ($user instanceof User) {
+            Activity::record($user, ActivityAction::SignedOut, $user, $user->name, 'Signed out of the till');
+        }
+        $user?->currentAccessToken()?->delete();
 
         return response()->json(['ok' => true]);
     }

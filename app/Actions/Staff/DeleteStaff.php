@@ -2,9 +2,11 @@
 
 namespace App\Actions\Staff;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -21,13 +23,14 @@ final class DeleteStaff
             throw ValidationException::withMessages(['user' => "You can't delete your own account."]);
         }
 
-        DB::transaction(function () use ($staff) {
+        DB::transaction(function () use ($actor, $staff) {
             $staff = User::query()->with('role')->lockForUpdate()->findOrFail($staff->id);
             if ($staff->role->locked && $staff->active && SaveStaff::otherActiveAdmins($staff) === 0) {
                 throw ValidationException::withMessages(['user' => "This is the last active admin and can't be deleted."]);
             }
             SignOutEverywhere::run($staff);
             $staff->delete();
+            Activity::record($actor, ActivityAction::StaffDeleted, $staff, $staff->name, "Deleted staff member {$staff->name}");
         });
     }
 }

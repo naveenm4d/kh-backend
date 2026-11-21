@@ -9,6 +9,7 @@ import {
     UserCog,
     Settings,
     KeyRound,
+    History,
 } from 'lucide-react';
 import type { Permission } from '@admin/features/auth/permissions';
 
@@ -89,6 +90,13 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
         icon: Settings,
         permission: 'page.settings',
     },
+    {
+        key: 'activity',
+        label: 'Activity log',
+        to: '/admin/activity',
+        icon: History,
+        permission: 'page.activity',
+    },
 ];
 
 /** Sidebar grouping for ADMIN_NAV_ITEMS, by item key. */
@@ -96,5 +104,5 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     { label: 'Overview', items: ['dashboard', 'reports'] },
     { label: 'Sales', items: ['orders', 'customers'] },
     { label: 'Stock', items: ['inventory', 'catalog'] },
-    { label: 'Admin', items: ['users', 'terminals', 'settings'] },
+    { label: 'Admin', items: ['users', 'terminals', 'settings', 'activity'] },
 ];

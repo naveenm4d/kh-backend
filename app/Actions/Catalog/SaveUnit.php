@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Unit;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use App\Support\Qty;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +31,7 @@ final class SaveUnit
             throw ValidationException::withMessages(['decimals' => 'Counted units take whole numbers. Mark it as measured to allow decimals.']);
         }
 
-        return DB::transaction(function () use ($data, $decimals, $unit) {
+        return DB::transaction(function () use ($user, $data, $decimals, $unit) {
             if ($unit !== null) {
                 $unit = Unit::query()->lockForUpdate()->findOrFail($unit->id);
             }
@@ -47,7 +48,9 @@ final class SaveUnit
                     throw ValidationException::withMessages(['decimals' => sprintf("%s has stock that doesn't fit %d decimal places. Correct its stock first.", $misfit, $decimals)]);
                 }
             }
+            $log = Activity::catalogSave($user, $unit, 'unit');
             $unit->save();
+            $log();
 
             // Product rows carry the unit to the tills.
             Product::withTrashed()->where('unit_id', $unit->id)->update(['updated_at' => now()]);

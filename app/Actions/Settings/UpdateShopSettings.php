@@ -2,10 +2,12 @@
 
 namespace App\Actions\Settings;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Models\ShopSetting;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Validation\ValidationException;
 
 final class UpdateShopSettings
@@ -40,7 +42,12 @@ final class UpdateShopSettings
         }
 
         $settings = ShopSetting::query()->firstOrFail();
-        $settings->fill($values)->save();
+        $settings->fill($values);
+        $changes = Activity::changesOf($settings, ['store_name' => 'Shop name', 'reg_no' => 'Registration no.', 'low_stock' => 'Low-stock level', 'critical_stock' => 'Very-low stock level']);
+        $settings->save();
+        if ($changes !== []) {
+            Activity::record($user, ActivityAction::SettingsUpdated, $settings, 'Shop settings', Activity::changedSummary('shop settings', $changes), $changes);
+        }
 
         return $settings;
     }

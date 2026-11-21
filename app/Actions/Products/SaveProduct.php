@@ -2,13 +2,16 @@
 
 namespace App\Actions\Products;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Enums\StockMovementReason;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use App\Support\Money;
 use App\Support\Qty;
 use App\Support\Stock;
@@ -71,9 +74,22 @@ final class SaveProduct
             ]);
             $product->setRelation('unit', $unit);
             Qty::ensureFits($stockMilli, $unit, $product->name, 'stock');
+            $changes = array_values(array_filter(Activity::changesOf($product, ['price' => 'Selling price', 'display_price' => 'Marked price'], [
+                'brand_id' => fn (mixed $id) => $id === null ? null : Brand::query()->whereKey($id)->value('name'),
+                'category_id' => fn (mixed $id) => $id === null ? null : Category::query()->whereKey($id)->value('name'),
+                'unit_id' => fn (mixed $id) => $id === null ? null : Unit::query()->whereKey($id)->value('name'),
+            ]), fn (array $change) => $change['field'] !== 'group' && $change['field'] !== 'stock'));
             $product->save();
 
+            $stockBefore = $product->stock;
             Stock::move($product, $stockDelta, $isNew ? StockMovementReason::Opening : StockMovementReason::Adjust, $user);
+            if ($stockDelta !== 0) {
+                $changes[] = Activity::change('stock', 'Stock', $isNew ? null : Qty::format($stockBefore, $unit), Qty::format($product->stock, $unit));
+            }
+            if ($isNew || $changes !== []) {
+                Activity::record($user, $isNew ? ActivityAction::ProductCreated : ActivityAction::ProductUpdated, $product, $product->name,
+                    $isNew ? 'Added product '.$product->name : Activity::changedSummary($product->name, $changes), $changes);
+            }
 
             return $product->refresh();
         });

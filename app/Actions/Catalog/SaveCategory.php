@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Support\Facades\DB;
 
 /** Creates or renames a category. Its products take the new group, and the tills re-sync them. */
@@ -17,13 +18,16 @@ final class SaveCategory
     {
         Abilities::ensure($user, Permission::PageCatalog);
 
-        return DB::transaction(function () use ($data, $category) {
+        return DB::transaction(function () use ($user, $data, $category) {
             $category ??= new Category;
             $category->fill([
                 'name' => trim($data['name']),
                 'parent' => trim((string) ($data['parent'] ?? '')),
                 'group' => trim((string) ($data['group'] ?? '')) ?: Category::DEFAULT_GROUP,
-            ])->save();
+            ]);
+            $log = Activity::catalogSave($user, $category, 'category');
+            $category->save();
+            $log();
 
             Product::query()->where('category_id', $category->id)->update([
                 'group' => $category->group,
