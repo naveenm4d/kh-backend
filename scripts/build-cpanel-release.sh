@@ -10,7 +10,8 @@
 # Env:
 #   TARGET_BRANCH  deploy branch to commit to (default cpanel-deploy; testing uses cpanel-deploy-dev)
 #   APP_PATH       where that branch is cloned on the server; written into the branch's .cpanel.yml
-#                  (default /home/subaorac/public_html/subaora.com/repositories/kh-backend)
+#                  (default: production /home/subaorac/public_html/kulatissahardware.com.lk/repositories,
+#                  testing /home/subaorac/public_html/subaora.com/repositories/kh-backend)
 #   REMOTE         default origin
 set -euo pipefail
 
@@ -18,7 +19,11 @@ cd "$(dirname "$0")/.."
 root="$(pwd)"
 target="${TARGET_BRANCH:-cpanel-deploy}"
 remote="${REMOTE:-origin}"
-app_path="${APP_PATH:-/home/subaorac/public_html/subaora.com/repositories/kh-backend}"
+case "$target" in
+    cpanel-deploy-dev) default_path="/home/subaorac/public_html/subaora.com/repositories/kh-backend" ;;
+    *) default_path="/home/subaorac/public_html/kulatissahardware.com.lk/repositories" ;;
+esac
+app_path="${APP_PATH:-$default_path}"
 app_path="${app_path%/}"
 case "$app_path" in
     /*) ;;
