@@ -36,6 +36,15 @@ export function orderTotals(order: Order): {
     return { subtotal, discount: subtotal - order.amount };
 }
 
+/** "14:05": when the bill was rung up, in the till's 24-hour style. */
+export function billTime(createdAt: string | null | undefined): string {
+    if (!createdAt) return '';
+    const d = new Date(createdAt);
+    return Number.isNaN(d.getTime())
+        ? ''
+        : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
 /** Reprints only have the persisted Order — subtotal/discount and cash tendered weren't stored, so they're derived from the final line totals, and Paid/Change assume full settlement. */
 export function buildReceiptData(order: Order): ReceiptData {
     const items = order.items.map((item) => {
@@ -62,6 +71,7 @@ export function buildReceiptData(order: Order): ReceiptData {
     return {
         invoice: order.invoice,
         dateLabel: formatDateLong(order.date),
+        timeLabel: billTime(order.createdAt),
         // Receipts show the cashier's code, not their name (older bills without one fall back to the name).
         cashier: order.cashierCode || order.cashier,
         payment: order.payment,

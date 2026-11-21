@@ -2,6 +2,7 @@
 
 namespace App\Actions\Orders;
 
+use App\Enums\ActivityAction;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\Permission;
@@ -10,6 +11,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use App\Support\Money;
 use App\Support\Qty;
 use App\Support\Stock;
@@ -48,7 +50,11 @@ final class CancelOrder
                 }
             }
 
-            $order->forceFill(['status' => OrderStatus::Cancelled, 'cancelled_at' => now()])->save();
+            $order->forceFill(['status' => OrderStatus::Cancelled, 'cancelled_at' => now()]);
+            $changes = Activity::changesOf($order, ['cancelled_at' => 'Cancelled at']);
+            $order->save();
+            Activity::record($user, ActivityAction::OrderCancelled, $order, $order->invoice,
+                sprintf('Cancelled bill %s (%s)', $order->invoice, Money::format($order->amount)), $changes);
 
             return $order->load('items');
         });

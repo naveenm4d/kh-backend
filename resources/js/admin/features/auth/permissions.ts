@@ -8,6 +8,7 @@ export type Permission =
     | 'page.catalog'
     | 'page.users'
     | 'page.settings'
+    | 'page.activity'
     | 'pos.access'
     | 'pos.discount'
     | 'pos.credit'
@@ -36,6 +37,7 @@ export const ADMIN_PAGES: { path: string; permission: Permission }[] = [
     { path: '/admin/catalog', permission: 'page.catalog' },
     { path: '/admin/users', permission: 'page.users' },
     { path: '/admin/settings', permission: 'page.settings' },
+    { path: '/admin/activity', permission: 'page.activity' },
 ];
 
 /** Where a user lands: the cashier screen if they can use it, otherwise their first admin page. */

@@ -53,21 +53,18 @@ export function OrderEditModal({
     useEffect(() => {
         if (order) {
             setLines(
-                order.items.map((i) => {
-                    const raw = i.unitPrice * i.qty;
-                    const discountPct =
-                        raw > 0 ? Math.round((1 - i.total / raw) * 100) : 0;
-                    return {
-                        productId: i.productId,
-                        name: i.name,
-                        unitPrice: i.unitPrice,
-                        qty: i.qty,
-                        unit: i.unit,
-                        measured: i.measured,
-                        discountPct,
-                        source: i.source,
-                    };
-                }),
+                // Keep each line's discount exactly as rung up (a manual 7.35% stays 7.35%):
+                // re-deriving it from the rounded totals would change untouched lines on save.
+                order.items.map((i) => ({
+                    productId: i.productId,
+                    name: i.name,
+                    unitPrice: i.unitPrice,
+                    qty: i.qty,
+                    unit: i.unit,
+                    measured: i.measured,
+                    discountPct: i.discountPct,
+                    source: i.source,
+                })),
             );
             setSearch('');
         }

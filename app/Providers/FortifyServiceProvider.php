@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Enums\ActivityAction;
 use App\Models\User;
+use App\Support\Activity;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -46,9 +48,11 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
             if (! $user->active) {
+                Activity::record(null, ActivityAction::SignInFailed, $user, $user->email, "Refused sign-in for {$user->email}: account deactivated");
                 throw ValidationException::withMessages([Fortify::username() => 'This account has been deactivated. Ask an admin to reactivate it.']);
             }
             if (! $user->canUseAdmin()) {
+                Activity::record(null, ActivityAction::SignInFailed, $user, $user->email, "Refused sign-in for {$user->email}: no admin pages");
                 throw ValidationException::withMessages([Fortify::username() => 'This account is for the cashier till. Sign in there instead.']);
             }
 

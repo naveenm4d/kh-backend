@@ -35,9 +35,9 @@ class DatabaseSeeder extends Seeder
 
         if (! ShopSetting::query()->exists()) {
             ShopSetting::query()->create([
-                'store_name' => 'Kulatissa Hardware',
-                'address' => 'Tissamaharama',
-                'phone' => '',
+                'store_name' => 'R.K. Kulatissa & Company Pvt Ltd',
+                'address' => 'No 16, Main street, Tissamaharama',
+                'phone' => '0472237298',
                 'reg_no' => '',
                 'receipt_footer' => "Thank you for shopping with us.\nGoods sold are not returnable\nunless manufacturing defects exist.\nWe look forward to serving you again.",
                 'low_stock' => 20,

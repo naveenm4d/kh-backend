@@ -17,6 +17,7 @@ enum Permission: string
     case PageCatalog = 'page.catalog';
     case PageUsers = 'page.users';
     case PageSettings = 'page.settings';
+    case PageActivity = 'page.activity';
 
     case PosAccess = 'pos.access';
     case PosDiscount = 'pos.discount';
@@ -52,6 +53,7 @@ enum Permission: string
             self::PageCatalog => 'Catalog',
             self::PageUsers => 'Users & roles',
             self::PageSettings => 'Settings',
+            self::PageActivity => 'Activity log',
             self::PosAccess => 'Use the cashier screen',
             self::PosDiscount => 'Give discounts',
             self::PosCredit => 'Sell on credit',
@@ -76,6 +78,7 @@ enum Permission: string
             self::PageCatalog => 'Brands, categories and suppliers.',
             self::PageUsers => 'Staff accounts, passwords and these permissions.',
             self::PageSettings => 'Shop details, stock levels and cashier tills.',
+            self::PageActivity => 'See who changed bills, stock, prices, staff and settings, and when.',
             self::PosAccess => 'Ring up sales and print receipts.',
             self::PosDiscount => 'Sell below the selling price. Marked-price discounts work without this.',
             self::PosCredit => "Add a bill to a customer's balance.",

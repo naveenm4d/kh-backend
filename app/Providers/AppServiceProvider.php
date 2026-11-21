@@ -2,20 +2,27 @@
 
 namespace App\Providers;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
+use App\Support\Activity;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Sanctum\Sanctum;
 
@@ -38,6 +45,32 @@ class AppServiceProvider extends ServiceProvider
         $this->configureAuthorization();
         $this->configureApiTokens();
         $this->configureRateLimiting();
+        $this->configureActivityLog();
+    }
+
+    /**
+     * Console sign-ins land in the activity log (till sign-ins are logged by the POS auth
+     * controller). Login fires after any two-factor step. The typed password is never kept.
+     */
+    protected function configureActivityLog(): void
+    {
+        Event::listen(function (Login $event): void {
+            if ($event->guard === 'web' && $event->user instanceof User) {
+                Activity::record($event->user, ActivityAction::SignedIn, $event->user, $event->user->name, 'Signed in to the admin console');
+            }
+        });
+        Event::listen(function (Failed $event): void {
+            if ($event->guard === 'web') {
+                $user = $event->user instanceof User ? $event->user : null;
+                $typed = $user->email ?? Str::limit(trim((string) ($event->credentials['email'] ?? '')), 120);
+                Activity::record(null, ActivityAction::SignInFailed, $user, $typed, "Failed sign-in for $typed");
+            }
+        });
+        Event::listen(function (Logout $event): void {
+            if ($event->guard === 'web' && $event->user instanceof User) {
+                Activity::record($event->user, ActivityAction::SignedOut, $event->user, $event->user->name, 'Signed out of the admin console');
+            }
+        });
     }
 
     /**
