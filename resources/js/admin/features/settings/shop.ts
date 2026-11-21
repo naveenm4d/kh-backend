@@ -14,9 +14,9 @@ export interface ShopSettings {
 
 /** Used until the first load lands, so stock badges never render blank. */
 export const DEFAULT_SHOP: ShopSettings = {
-    storeName: 'Kulatissa Hardware',
-    address: '',
-    phone: '',
+    storeName: 'R.K. Kulatissa & Co. (Pvt) Ltd',
+    address: 'Main street, Tissamaharama',
+    phone: '0472237298',
     regNo: '',
     receiptFooter: '',
     lowStock: 20,

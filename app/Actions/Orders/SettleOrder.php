@@ -2,11 +2,14 @@
 
 namespace App\Actions\Orders;
 
+use App\Enums\ActivityAction;
 use App\Enums\OrderStatus;
 use App\Enums\Permission;
 use App\Models\Order;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -20,12 +23,16 @@ final class SettleOrder
     {
         Abilities::ensure($user, Permission::OrdersSettle);
 
-        return DB::transaction(function () use ($order) {
+        return DB::transaction(function () use ($user, $order) {
             $order = Order::query()->lockForUpdate()->findOrFail($order->id);
             if ($order->status !== OrderStatus::PaymentPending) {
                 throw ValidationException::withMessages(['order' => 'Only bills waiting for payment can be marked as paid.']);
             }
-            $order->forceFill(['status' => OrderStatus::Completed])->save();
+            $order->forceFill(['status' => OrderStatus::Completed]);
+            $changes = Activity::changesOf($order);
+            $order->save();
+            Activity::record($user, ActivityAction::OrderSettled, $order, $order->invoice,
+                sprintf('Marked bill %s (%s) as paid', $order->invoice, Money::format($order->amount)), $changes);
 
             return $order->load('items');
         });

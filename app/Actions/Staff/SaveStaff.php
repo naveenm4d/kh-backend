@@ -2,10 +2,12 @@
 
 namespace App\Actions\Staff;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -53,6 +55,10 @@ final class SaveStaff
                 'role_id' => $role->id,
                 'active' => $active,
             ]);
+            $isNew = ! $staff->exists;
+            $changes = Activity::changesOf($staff, ['code' => 'Cashier code'], [
+                'role_id' => fn (mixed $id) => $id === null ? null : Role::query()->whereKey($id)->value('name'),
+            ]);
             if (! $staff->exists) {
                 $password = (string) ($data['password'] ?? '');
                 if (strlen($password) < 8) {
@@ -61,6 +67,10 @@ final class SaveStaff
                 $staff->password = $password;
             }
             $staff->save();
+            if ($isNew || $changes !== []) {
+                Activity::record($actor, $isNew ? ActivityAction::StaffCreated : ActivityAction::StaffUpdated, $staff, $staff->name,
+                    $isNew ? "Added staff member {$staff->name}" : Activity::changedSummary($staff->name, $changes), $changes);
+            }
 
             if ($signOut) {
                 SignOutEverywhere::run($staff);

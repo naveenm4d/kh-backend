@@ -2,10 +2,12 @@
 
 namespace App\Actions\Customers;
 
+use App\Enums\ActivityAction;
 use App\Enums\Permission;
 use App\Models\Customer;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Validation\ValidationException;
 
 /** Soft-deletes a customer; their bills and payments keep pointing at the archived record. */
@@ -22,5 +24,6 @@ final class DeleteCustomer
         }
 
         $customer->delete();
+        Activity::record($user, ActivityAction::CustomerDeleted, $customer, $customer->name, 'Deleted customer '.$customer->name);
     }
 }

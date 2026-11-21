@@ -2,6 +2,7 @@
 
 namespace App\Actions\Orders;
 
+use App\Enums\ActivityAction;
 use App\Enums\ItemSource;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
@@ -12,6 +13,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use App\Support\Abilities;
+use App\Support\Activity;
 use App\Support\Money;
 use App\Support\Qty;
 use App\Support\Stock;
@@ -78,7 +80,11 @@ final class UpdateOrderItems
             $order->items()->delete();
             $order->items()->createMany($priced['lines']);
             // updated_at is set even when the total is unchanged: the items did change, and tills sync on it.
-            $order->forceFill(['amount' => Money::fromCents($priced['amountCents']), 'status' => $status, 'updated_at' => now()])->save();
+            $order->forceFill(['amount' => Money::fromCents($priced['amountCents']), 'status' => $status, 'updated_at' => now()]);
+            $changes = [...self::lineChanges($oldItems->map(fn (OrderItem $item) => $item->only(['product_id', 'name', 'qty', 'unit', 'unit_price', 'discount_pct']))->all(), $priced['lines']), ...Activity::changesOf($order, ['amount' => 'Total'])];
+            $order->save();
+            Activity::record($user, ActivityAction::OrderItemsUpdated, $order, $order->invoice,
+                sprintf('Edited the items on bill %s (%s → %s)', $order->invoice, Money::format(Money::fromCents($oldAmountCents)), Money::format($order->amount)), $changes);
 
             if ($order->customer_id !== null) {
                 $customer = Customer::withTrashed()->lockForUpdate()->find($order->customer_id);
@@ -94,6 +100,45 @@ final class UpdateOrderItems
 
             return $order->load('items');
         });
+    }
+
+    /**
+     * Each product whose lines changed, as "2 bag × Rs. 1,500" before and after (null when absent).
+     *
+     * @param  array<int, array<string, mixed>>  $before
+     * @param  array<int, array<string, mixed>>  $after
+     * @return list<array{field: string, label: string, from: mixed, to: mixed}>
+     */
+    private static function lineChanges(array $before, array $after): array
+    {
+        $describe = function (array $lines): array {
+            $out = [];
+            foreach ($lines as $line) {
+                $key = (string) ($line['product_id'] ?? $line['name']);
+                $qty = rtrim(rtrim((string) $line['qty'], '0'), '.');
+                $text = sprintf('%s %s × %s', $qty, $line['unit'], Money::format($line['unit_price']));
+                if ((float) $line['discount_pct'] > 0) {
+                    $text .= sprintf(' (−%s%%)', rtrim(rtrim((string) $line['discount_pct'], '0'), '.'));
+                }
+                $out[$key]['name'] = (string) $line['name'];
+                $out[$key]['text'][] = $text;
+            }
+
+            return array_map(fn (array $v) => ['name' => $v['name'], 'text' => implode(', ', $v['text'])], $out);
+        };
+        $old = $describe($before);
+        $new = $describe($after);
+
+        $changes = [];
+        foreach ($old + $new as $key => $line) {
+            $from = $old[$key]['text'] ?? null;
+            $to = $new[$key]['text'] ?? null;
+            if ($from !== $to) {
+                $changes[] = Activity::change('item:'.$key, $line['name'], $from, $to);
+            }
+        }
+
+        return $changes;
     }
 
     /**

@@ -17,6 +17,7 @@ use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\Unit;
 use App\Support\Abilities;
+use App\Support\Activity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -86,13 +87,27 @@ class CatalogController extends Controller
     {
         Abilities::ensure($request->user(), Permission::PageCatalog);
 
-        return SupplierResource::make(Supplier::create($this->supplierData($request)))->response()->setStatusCode(201);
+        $supplier = DB::transaction(function () use ($request) {
+            $supplier = new Supplier($this->supplierData($request));
+            $log = Activity::catalogSave($request->user(), $supplier, 'supplier');
+            $supplier->save();
+            $log();
+
+            return $supplier;
+        });
+
+        return SupplierResource::make($supplier)->response()->setStatusCode(201);
     }
 
     public function updateSupplier(Request $request, Supplier $supplier): SupplierResource
     {
         Abilities::ensure($request->user(), Permission::PageCatalog);
-        $supplier->update($this->supplierData($request));
+        DB::transaction(function () use ($request, $supplier) {
+            $supplier->fill($this->supplierData($request));
+            $log = Activity::catalogSave($request->user(), $supplier, 'supplier');
+            $supplier->save();
+            $log();
+        });
 
         return SupplierResource::make($supplier);
     }

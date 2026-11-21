@@ -49,7 +49,7 @@ it('renders every admin page for an admin', function (string $page) {
     $this->actingAs($this->admin())->get("/admin/$page")
         ->assertOk()
         ->assertInertia(fn ($inertia) => $inertia->component("admin/$page")->where('auth.user.code', 'admin'));
-})->with(['dashboard', 'reports', 'orders', 'customers', 'inventory', 'catalog', 'users', 'settings']);
+})->with(['dashboard', 'reports', 'orders', 'customers', 'inventory', 'catalog', 'users', 'settings', 'activity']);
 
 it('never shares secrets with the browser', function () {
     $this->actingAs($this->admin())->get('/admin/dashboard')
