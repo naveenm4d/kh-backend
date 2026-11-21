@@ -1,6 +1,5 @@
 import type { ReceiptData } from '@admin/shared/components/ThermalReceipt';
 import { formatCurrency } from '@admin/shared/utils/currency';
-import { formatDateLong } from '@admin/shared/utils/date';
 import { lineQty } from '@admin/shared/utils/units';
 import { formatPct } from '@admin/features/products/pricing';
 import { paymentLabel } from '@admin/features/orders/constants';
@@ -36,13 +35,18 @@ export function orderTotals(order: Order): {
     return { subtotal, discount: subtotal - order.amount };
 }
 
-/** "14:05": when the bill was rung up, in the till's 24-hour style. */
-export function billTime(createdAt: string | null | undefined): string {
-    if (!createdAt) return '';
-    const d = new Date(createdAt);
-    return Number.isNaN(d.getTime())
-        ? ''
-        : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+/**
+ * "2026-11-21 21:00:00": when the bill was rung up, printed in one Date row. Bills without a
+ * timestamp fall back to their date alone.
+ */
+export function billDateTime(
+    createdAt: string | null | undefined,
+    fallbackDate = '',
+): string {
+    const d = createdAt ? new Date(createdAt) : null;
+    if (!d || Number.isNaN(d.getTime())) return fallbackDate;
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
 /** Reprints only have the persisted Order — subtotal/discount and cash tendered weren't stored, so they're derived from the final line totals, and Paid/Change assume full settlement. */
@@ -70,8 +74,8 @@ export function buildReceiptData(order: Order): ReceiptData {
 
     return {
         invoice: order.invoice,
-        dateLabel: formatDateLong(order.date),
-        timeLabel: billTime(order.createdAt),
+        dateLabel: billDateTime(order.createdAt, order.date),
+        timeLabel: '',
         // Receipts show the cashier's code, not their name (older bills without one fall back to the name).
         cashier: order.cashierCode || order.cashier,
         payment: order.payment,
