@@ -22,6 +22,8 @@ export interface OrderLineItem {
     /** That unit was measured (length or weight): shown as "2.5 kg". */
     measured: boolean;
     unitPrice: number;
+    /** Discount on this line as rung up (manual or automatic), up to 4 dp. */
+    discountPct: number;
     total: number;
     source?: ItemSource;
 }

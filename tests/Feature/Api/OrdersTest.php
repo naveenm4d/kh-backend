@@ -305,3 +305,26 @@ it('computes units sold this week from bills', function () {
         ->assertJsonPath('stock', 95);
     expect(Product::query()->count())->toBe(1)->and(Customer::query()->count())->toBe(0);
 });
+
+it('keeps a manual line discount when another line is edited', function () {
+    $user = $this->staffWith([Permission::PosAccess, Permission::PosDiscount, Permission::OrdersEdit]);
+    $cement = $this->product();
+    $sand = $this->product(['name' => 'River Sand', 'price' => 1200]);
+    $pos = $this->pos($user);
+    $invoice = $pos->postJson('/api/v1/orders', [
+        'items' => [$this->line($cement, 2, ['discountPct' => 7.35]), $this->line($sand, 1)],
+        'payment' => 'CASH',
+    ])->assertCreated()->json('invoice');
+
+    // The edit screen sends back each line's stored discount, changing only the sand.
+    $items = collect($pos->getJson("/api/v1/orders/$invoice")->assertOk()->json('items'))
+        ->map(fn (array $i) => [
+            'productId' => (int) $i['productId'], 'qty' => $i['name'] === 'River Sand' ? 3 : $i['qty'],
+            'unitPrice' => $i['unitPrice'], 'discountPct' => $i['discountPct'], 'source' => $i['source'],
+        ])->all();
+    expect($items[0]['discountPct'])->toBe(7.35);
+
+    $pos->putJson("/api/v1/orders/$invoice/items", ['items' => $items])->assertOk()
+        ->assertJsonPath('items.0.discountPct', 7.35)
+        ->assertJsonPath('items.0.total', 5095.75);
+});
