@@ -5,7 +5,6 @@ namespace App\Http\Requests\Admin;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class StaffRequest extends FormRequest
 {
@@ -30,7 +29,7 @@ class StaffRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:32'],
             'role' => ['required', 'integer', 'exists:roles,id'],
             'active' => ['boolean'],
-            'password' => [$staff === null ? 'required' : 'prohibited', 'string', Password::defaults()],
+            'password' => [$staff === null ? 'required' : 'prohibited', 'string', 'min:4'],
         ];
     }
 

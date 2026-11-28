@@ -61,8 +61,8 @@ final class SaveStaff
             ]);
             if (! $staff->exists) {
                 $password = (string) ($data['password'] ?? '');
-                if (strlen($password) < 8) {
-                    throw ValidationException::withMessages(['password' => 'The password needs at least 8 characters.']);
+                if (mb_strlen($password) < 4) {
+                    throw ValidationException::withMessages(['password' => 'The password needs at least 4 characters.']);
                 }
                 $staff->password = $password;
             }

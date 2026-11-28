@@ -19,7 +19,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 /** Staff accounts and roles (Users & roles page). */
 class StaffController extends Controller
@@ -48,7 +47,7 @@ class StaffController extends Controller
 
     public function resetPassword(Request $request, User $staff, ResetStaffPassword $reset): Response
     {
-        $data = $request->validate(['password' => ['required', 'string', Password::defaults()]]);
+        $data = $request->validate(['password' => ['required', 'string', 'min:4']]);
         $reset($request->user(), $staff, $data['password']);
 
         return response()->noContent();
