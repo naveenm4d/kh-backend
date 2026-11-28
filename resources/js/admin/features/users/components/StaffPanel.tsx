@@ -31,13 +31,13 @@ function ResetPassword({
     const [pw, setPw] = useState('');
     const reset = useResetPassword();
     const toast = useToast();
-    const short = pw.length > 0 && pw.length < 6;
+    const short = pw.length > 0 && pw.length < 4;
     return (
         <form
             className="flex flex-col gap-2"
             onSubmit={async (e) => {
                 e.preventDefault();
-                if (pw.length < 6) return;
+                if (pw.length < 4) return;
                 try {
                     await reset.mutateAsync({ id: user.id, password: pw });
                     toast.success(`${user.name}'s password was changed`);
@@ -68,14 +68,14 @@ function ResetPassword({
                 }
             >
                 {short
-                    ? 'At least 6 characters'
+                    ? 'At least 4 characters'
                     : `${user.name.split(' ')[0]} signs in with the new password from now on.`}
             </span>
             <div className="flex gap-2">
                 <CompactButton
                     type="submit"
                     variant="primary"
-                    disabled={pw.length < 6}
+                    disabled={pw.length < 4}
                     busy={reset.isPending}
                 >
                     Set password

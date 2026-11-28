@@ -21,7 +21,7 @@ import {
 } from '@admin/features/users/hooks';
 import type { Role, StaffUser } from '@admin/features/users/types';
 
-const MIN_PASSWORD = 6;
+const MIN_PASSWORD = 4;
 
 /** Create (user = null) or edit a staff account, inside the panel. */
 export function StaffForm({

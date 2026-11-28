@@ -102,7 +102,7 @@ it('manages staff through the console with server-side validation', function () 
         ->assertUnprocessable()->assertJsonValidationErrors('code');
     $id = $this->actingAs($admin)->postJson('/admin/api/staff', ['name' => 'Kasun', 'code' => 'kasun-f', 'email' => 'K@Example.com', 'role' => $cashierRole, 'password' => 'secret-pass'])
         ->assertCreated()->assertJsonPath('email', 'k@example.com')->json('id');
-    $this->actingAs($admin)->postJson("/admin/api/staff/$id/password", ['password' => 'short'])->assertUnprocessable();
+    $this->actingAs($admin)->postJson("/admin/api/staff/$id/password", ['password' => 'abc'])->assertUnprocessable();
     $this->actingAs($admin)->postJson("/admin/api/staff/$id/password", ['password' => 'another-pass'])->assertNoContent();
 });
 
